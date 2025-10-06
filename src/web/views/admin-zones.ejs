@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ZONE MANAGEMENT // FLIGHT TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .admin-container {
+      display: flex;
+      height: calc(100vh - 40px);
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .admin-header {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--green-medium);
+      margin-bottom: 20px;
+    }
+
+    .admin-title {
+      font-size: 32px;
+      color: var(--green-bright);
+    }
+
+    .admin-body {
+      margin-top: 140px;
+      display: flex;
+      gap: 20px;
+      height: calc(100% - 80px);
+    }
+
+    /* List Panel */
+    .zone-list-panel {
+      flex: 0 0 350px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.02);
+      overflow-y: auto;
+      padding: 15px;
+    }
+
+    .zone-list-header {
+      color: var(--green-bright);
+      font-size: 20px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .zone-list-item {
+      padding: 12px;
+      margin-bottom: 8px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .zone-list-item:hover {
+      background: rgba(0, 255, 0, 0.05);
+      border-color: var(--green-medium);
+    }
+
+    .zone-list-item.active {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    }
+
+    .zone-list-name {
+      font-size: 18px;
+      color: var(--green-bright);
+      margin-bottom: 5px;
+    }
+
+    .zone-list-stats {
+      font-size: 14px;
+      color: var(--green-medium);
+    }
+
+    /* Detail Panel */
+    .zone-detail-panel {
+      flex: 1;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.02);
+      padding: 20px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .zone-detail-panel.active {
+      display: block;
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .detail-title {
+      font-size: 28px;
+      color: var(--green-bright);
+    }
+
+    .detail-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .detail-button {
+      padding: 8px 16px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .detail-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+    }
+
+    .detail-button.save {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+    }
+
+    .detail-button.delete {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .detail-button.delete:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    /* Detail Sections */
+    .detail-section {
+      margin-bottom: 30px;
+      padding: 15px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.01);
+    }
+
+    .section-title {
+      font-size: 20px;
+      color: var(--green-bright);
+      margin-bottom: 15px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .property-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px dashed var(--green-dark);
+    }
+
+    .property-row:last-child {
+      border-bottom: none;
+    }
+
+    .property-label {
+      color: var(--green-medium);
+      font-size: 16px;
+      min-width: 150px;
+    }
+
+    .property-value {
+      flex: 1;
+      color: var(--green-bright);
+      font-size: 18px;
+      text-align: right;
+    }
+
+    .property-input {
+      flex: 1;
+      padding: 8px;
+      background: rgba(0, 255, 0, 0.05);
+      border: 1px solid var(--green-medium);
+      color: var(--green-bright);
+      font-family: "VT323", monospace;
+      font-size: 18px;
+      text-align: right;
+    }
+
+    .property-input:focus {
+      outline: none;
+      border-color: var(--green-bright);
+      background: rgba(0, 255, 0, 0.08);
+    }
+
+    /* Statistics Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .stat-card {
+      padding: 15px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      color: var(--green-bright);
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--green-medium);
+      text-transform: uppercase;
+    }
+
+    /* Polygon Visualization */
+    .polygon-map {
+      height: 300px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.02);
+      position: relative;
+      margin-top: 15px;
+    }
+
+    .polygon-canvas {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Status Messages */
+    .status-message {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      padding: 15px 20px;
+      border: 2px solid var(--green-bright);
+      background: rgba(0, 0, 0, 0.9);
+      color: var(--green-bright);
+      font-size: 18px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .status-message.visible {
+      display: block;
+    }
+
+    .status-message.error {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 50px;
+      color: var(--green-medium);
+      font-size: 20px;
+    }
+
+    .edit-mode .property-value {
+      display: none;
+    }
+
+    .edit-mode .property-input {
+      display: block;
+    }
+
+    .property-input {
+      display: none;
+    }
+
+    /* Navigation */
+    .nav-links {
+      display: flex;
+      gap: 20px;
+    }
+
+    .nav-link {
+      color: var(--green-medium);
+      text-decoration: none;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--green-bright);
+    }
+
+    /* Live indicator */
+    .live-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: var(--green-bright);
+      border-radius: 50%;
+      margin-left: 8px;
+      animation: pulse 2s infinite;
+    }
+
+    .live-indicator.inactive {
+      background: var(--green-dark);
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.3; }
+      100% { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="admin-header">
+        <div class="admin-title">ZONE MANAGEMENT</div>
+      </div>
+
+      <nav style="position: absolute; top: 80px; left: 20px; right: 20px; display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; padding: 15px; background: rgba(0, 255, 0, 0.02); border: 1px solid var(--green-dark);">
+        <a href="/admin" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Dashboard</a>
+        <a href="/admin/zones" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-bright); background: rgba(0, 255, 0, 0.15);">Zones</a>
+        <a href="/admin/alerts" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Alerts</a>
+        <a href="/admin/docs" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Documentation</a>
+        <a href="/admin/api" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">API</a>
+      </nav>
+
+      <div class="admin-body">
+        <div class="zone-list-panel">
+          <div class="zone-list-header">
+            TRACKING ZONES
+            <span style="float: right; font-size: 14px; color: var(--green-medium);">
+              <%= areas.length %> ZONES
+            </span>
+          </div>
+          <% if (areas && areas.length > 0) { %>
+            <% areas.forEach(function(area) { %>
+              <div class="zone-list-item" data-zone-id="<%= area.id %>" onclick="selectZone(<%= area.id %>)">
+                <div class="zone-list-name">
+                  <%= area.name %>
+                  <span class="live-indicator" id="live-<%= area.id %>"></span>
+                </div>
+                <div class="zone-list-stats">
+                  ID: <%= area.id %> |
+                  <% if (area.min_altitude !== null || area.max_altitude !== null) { %>
+                    ALT: <%= area.min_altitude || 0 %>-<%= area.max_altitude || '∞' %> ft
+                  <% } else { %>
+                    NO ALT LIMITS
+                  <% } %>
+                </div>
+              </div>
+            <% }); %>
+          <% } else { %>
+            <div class="empty-state">No zones configured</div>
+          <% } %>
+        </div>
+
+        <div class="zone-detail-panel" id="detailPanel">
+          <div class="empty-state" id="emptyDetail">
+            SELECT A ZONE TO VIEW DETAILS
+          </div>
+
+          <div id="detailContent" style="display: none;">
+            <div class="detail-header">
+              <div class="detail-title" id="detailTitle">ZONE DETAILS</div>
+              <div class="detail-actions">
+                <button class="detail-button" id="editBtn" onclick="toggleEditMode()">EDIT</button>
+                <button class="detail-button save" id="saveBtn" onclick="saveChanges()" style="display: none;">SAVE</button>
+                <button class="detail-button" id="cancelBtn" onclick="cancelEdit()" style="display: none;">CANCEL</button>
+                <button class="detail-button delete" onclick="deleteZone()">DELETE</button>
+              </div>
+            </div>
+
+            <!-- Basic Properties -->
+            <div class="detail-section">
+              <div class="section-title">BASIC PROPERTIES</div>
+              <div class="property-row">
+                <span class="property-label">Zone ID:</span>
+                <span class="property-value" id="zoneId">-</span>
+              </div>
+              <div class="property-row">
+                <span class="property-label">Zone Name:</span>
+                <span class="property-value" id="zoneName">-</span>
+                <input type="text" class="property-input" id="zoneNameInput">
+              </div>
+              <div class="property-row">
+                <span class="property-label">Created:</span>
+                <span class="property-value" id="zoneCreated">-</span>
+              </div>
+            </div>
+
+            <!-- Altitude Constraints -->
+            <div class="detail-section">
+              <div class="section-title">ALTITUDE CONSTRAINTS</div>
+              <div class="property-row">
+                <span class="property-label">Minimum Altitude:</span>
+                <span class="property-value" id="minAlt">-</span>
+                <input type="number" class="property-input" id="minAltInput" min="0" placeholder="No minimum">
+              </div>
+              <div class="property-row">
+                <span class="property-label">Maximum Altitude:</span>
+                <span class="property-value" id="maxAlt">-</span>
+                <input type="number" class="property-input" id="maxAltInput" min="0" placeholder="No maximum">
+              </div>
+            </div>
+
+            <!-- Live Statistics -->
+            <div class="detail-section">
+              <div class="section-title">LIVE STATISTICS</div>
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="stat-value" id="currentAircraft">0</div>
+                  <div class="stat-label">Current Aircraft</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value" id="todayTotal">0</div>
+                  <div class="stat-label">Today's Total</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value" id="avgAltitude">-</div>
+                  <div class="stat-label">Avg Altitude</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-value" id="lastSeen">-</div>
+                  <div class="stat-label">Last Activity</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Polygon Visualization -->
+            <div class="detail-section">
+              <div class="section-title">ZONE BOUNDARY</div>
+              <div class="property-row">
+                <span class="property-label">Polygon Points:</span>
+                <span class="property-value" id="polygonPoints">-</span>
+              </div>
+              <div class="polygon-map">
+                <canvas class="polygon-canvas" id="polygonCanvas"></canvas>
+              </div>
+              <div class="property-row" style="margin-top: 15px; display: none;" id="polygonEditRow">
+                <span class="property-label">
+                  Polygon Data:
+                  <button onclick="formatPolygon()" style="margin-left: 10px; padding: 4px 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05); color: var(--green-medium);">FORMAT</button>
+                  <button onclick="copyPolygon()" style="margin-left: 5px; padding: 4px 8px; font-size: 12px; cursor: pointer; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05); color: var(--green-medium);">COPY</button>
+                </span>
+                <textarea class="property-input" id="polygonInput"
+                  style="display: block; width: 100%; height: 150px; font-family: monospace; font-size: 14px; resize: vertical;"
+                  placeholder="Paste polygon as JSON array: [[lat1,lon1], [lat2,lon2], ...]"></textarea>
+              </div>
+              <div id="polygonValidation" style="margin-top: 10px; color: #ff6b6b; display: none;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-message" id="statusMessage"></div>
+    </div>
+  </div>
+
+  <script>
+    const zones = <%- JSON.stringify(areas) %>;
+    let currentZone = null;
+    let editMode = false;
+    let statsInterval = null;
+    let pendingPolygon = null;
+
+    function selectZone(zoneId) {
+      currentZone = zones.find(z => z.id === zoneId);
+
+      if (!currentZone) {
+        showStatus('Zone not found', 'error');
+        return;
+      }
+
+      // Update active state in list
+      document.querySelectorAll('.zone-list-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.zoneId === String(zoneId));
+      });
+
+      // Show detail panel
+      document.getElementById('detailPanel').classList.add('active');
+      document.getElementById('emptyDetail').style.display = 'none';
+      document.getElementById('detailContent').style.display = 'block';
+
+      // Populate details
+      populateDetails();
+
+      // Start fetching live stats
+      fetchStats();
+      if (statsInterval) clearInterval(statsInterval);
+      statsInterval = setInterval(fetchStats, 5000);
+    }
+
+    function populateDetails() {
+      if (!currentZone) return;
+
+      document.getElementById('detailTitle').textContent = `ZONE: ${currentZone.name.toUpperCase()}`;
+      document.getElementById('zoneId').textContent = currentZone.id;
+      document.getElementById('zoneName').textContent = currentZone.name;
+      document.getElementById('zoneNameInput').value = currentZone.name;
+
+      // Altitude constraints
+      document.getElementById('minAlt').textContent =
+        currentZone.min_altitude !== null ? `${currentZone.min_altitude} ft` : 'No minimum';
+      document.getElementById('minAltInput').value =
+        currentZone.min_altitude !== null ? currentZone.min_altitude : '';
+
+      document.getElementById('maxAlt').textContent =
+        currentZone.max_altitude !== null ? `${currentZone.max_altitude} ft` : 'No maximum';
+      document.getElementById('maxAltInput').value =
+        currentZone.max_altitude !== null ? currentZone.max_altitude : '';
+
+      // Polygon info
+      const polygon = JSON.parse(currentZone.polygon);
+      document.getElementById('polygonPoints').textContent = `${polygon.length} points`;
+      document.getElementById('polygonInput').value = JSON.stringify(polygon, null, 2);
+
+      // Draw polygon
+      drawPolygon(polygon);
+    }
+
+    function drawPolygon(polygon) {
+      const canvas = document.getElementById('polygonCanvas');
+      const ctx = canvas.getContext('2d');
+
+      // Set canvas size
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (polygon.length === 0) return;
+
+      // Find bounds
+      let minLat = polygon[0][0], maxLat = polygon[0][0];
+      let minLon = polygon[0][1], maxLon = polygon[0][1];
+
+      polygon.forEach(point => {
+        minLat = Math.min(minLat, point[0]);
+        maxLat = Math.max(maxLat, point[0]);
+        minLon = Math.min(minLon, point[1]);
+        maxLon = Math.max(maxLon, point[1]);
+      });
+
+      // Add padding
+      const padding = 20;
+      const width = canvas.width - 2 * padding;
+      const height = canvas.height - 2 * padding;
+
+      // Scale factors
+      const scaleX = width / (maxLon - minLon);
+      const scaleY = height / (maxLat - minLat);
+      const scale = Math.min(scaleX, scaleY);
+
+      // Center offset
+      const offsetX = padding + (width - (maxLon - minLon) * scale) / 2;
+      const offsetY = padding + (height - (maxLat - minLat) * scale) / 2;
+
+      // Draw polygon
+      ctx.strokeStyle = '#00ff00';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+
+      polygon.forEach((point, index) => {
+        const x = offsetX + (point[1] - minLon) * scale;
+        const y = canvas.height - (offsetY + (point[0] - minLat) * scale);
+
+        if (index === 0) {
+          ctx.moveTo(x, y);
+        } else {
+          ctx.lineTo(x, y);
+        }
+      });
+
+      ctx.closePath();
+      ctx.stroke();
+
+      // Draw points
+      ctx.fillStyle = '#00ff00';
+      polygon.forEach(point => {
+        const x = offsetX + (point[1] - minLon) * scale;
+        const y = canvas.height - (offsetY + (point[0] - minLat) * scale);
+        ctx.beginPath();
+        ctx.arc(x, y, 3, 0, 2 * Math.PI);
+        ctx.fill();
+      });
+    }
+
+    async function fetchStats() {
+      if (!currentZone) return;
+
+      try {
+        // Fetch current observations
+        const response = await fetch(`/api/zones/${currentZone.id}/stats`);
+        if (response.ok) {
+          const stats = await response.json();
+
+          document.getElementById('currentAircraft').textContent = stats.currentAircraft || 0;
+          document.getElementById('todayTotal').textContent = stats.todayTotal || 0;
+          document.getElementById('avgAltitude').textContent =
+            stats.avgAltitude ? `${Math.round(stats.avgAltitude)} ft` : '-';
+          document.getElementById('lastSeen').textContent =
+            stats.lastSeen ? new Date(stats.lastSeen).toLocaleTimeString() : 'Never';
+
+          // Update live indicator
+          const indicator = document.getElementById(`live-${currentZone.id}`);
+          if (indicator) {
+            indicator.classList.toggle('inactive', stats.currentAircraft === 0);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      }
+    }
+
+    function toggleEditMode() {
+      editMode = !editMode;
+      document.getElementById('detailContent').classList.toggle('edit-mode', editMode);
+
+      document.getElementById('editBtn').style.display = editMode ? 'none' : 'block';
+      document.getElementById('saveBtn').style.display = editMode ? 'block' : 'none';
+      document.getElementById('cancelBtn').style.display = editMode ? 'block' : 'none';
+      document.getElementById('polygonEditRow').style.display = editMode ? 'flex' : 'none';
+
+      // Add input listener for polygon validation
+      if (editMode) {
+        document.getElementById('polygonInput').addEventListener('input', validatePolygon);
+      }
+    }
+
+    function validatePolygon() {
+      const input = document.getElementById('polygonInput').value.trim();
+      const validationEl = document.getElementById('polygonValidation');
+
+      if (!input) {
+        validationEl.style.display = 'none';
+        pendingPolygon = null;
+        return true;
+      }
+
+      try {
+        const polygon = JSON.parse(input);
+
+        // Validate structure
+        if (!Array.isArray(polygon)) {
+          throw new Error('Polygon must be an array');
+        }
+
+        if (polygon.length < 3) {
+          throw new Error('Polygon must have at least 3 points');
+        }
+
+        for (let i = 0; i < polygon.length; i++) {
+          const point = polygon[i];
+          if (!Array.isArray(point) || point.length !== 2) {
+            throw new Error(`Point ${i + 1} must be [latitude, longitude]`);
+          }
+
+          const [lat, lon] = point;
+          if (typeof lat !== 'number' || typeof lon !== 'number') {
+            throw new Error(`Point ${i + 1} must contain numbers`);
+          }
+
+          if (lat < -90 || lat > 90) {
+            throw new Error(`Point ${i + 1}: latitude must be between -90 and 90`);
+          }
+
+          if (lon < -180 || lon > 180) {
+            throw new Error(`Point ${i + 1}: longitude must be between -180 and 180`);
+          }
+        }
+
+        // Valid polygon
+        validationEl.style.display = 'none';
+        pendingPolygon = polygon;
+
+        // Preview the new polygon
+        drawPolygon(polygon);
+        return true;
+
+      } catch (error) {
+        validationEl.textContent = `Invalid polygon: ${error.message}`;
+        validationEl.style.display = 'block';
+        pendingPolygon = null;
+        return false;
+      }
+    }
+
+    function cancelEdit() {
+      editMode = false;
+      document.getElementById('detailContent').classList.remove('edit-mode');
+
+      document.getElementById('editBtn').style.display = 'block';
+      document.getElementById('saveBtn').style.display = 'none';
+      document.getElementById('cancelBtn').style.display = 'none';
+      document.getElementById('polygonEditRow').style.display = 'none';
+      document.getElementById('polygonValidation').style.display = 'none';
+
+      // Reset pending polygon
+      pendingPolygon = null;
+
+      // Reset inputs and redraw original polygon
+      populateDetails();
+    }
+
+    async function saveChanges() {
+      if (!currentZone) return;
+
+      // Validate polygon first if it was changed
+      const polygonInput = document.getElementById('polygonInput').value.trim();
+      const originalPolygon = JSON.parse(currentZone.polygon);
+      const polygonChanged = JSON.stringify(originalPolygon, null, 2) !== polygonInput;
+
+      if (polygonChanged && !validatePolygon()) {
+        showStatus('Please fix polygon errors before saving', 'error');
+        return;
+      }
+
+      const updates = {};
+      const newName = document.getElementById('zoneNameInput').value.trim();
+      const newMinAlt = document.getElementById('minAltInput').value;
+      const newMaxAlt = document.getElementById('maxAltInput').value;
+
+      if (newName && newName !== currentZone.name) {
+        updates.name = newName;
+      }
+
+      if (newMinAlt === '') {
+        updates.min_altitude = null;
+      } else {
+        const min = parseInt(newMinAlt);
+        if (!isNaN(min) && min >= 0) {
+          updates.min_altitude = min;
+        }
+      }
+
+      if (newMaxAlt === '') {
+        updates.max_altitude = null;
+      } else {
+        const max = parseInt(newMaxAlt);
+        if (!isNaN(max) && max >= 0) {
+          updates.max_altitude = max;
+        }
+      }
+
+      // Add polygon if it changed
+      if (pendingPolygon) {
+        updates.polygon = JSON.stringify(pendingPolygon);
+      }
+
+      // Validate
+      if (updates.min_altitude !== undefined && updates.max_altitude !== undefined &&
+          updates.min_altitude !== null && updates.max_altitude !== null &&
+          updates.min_altitude > updates.max_altitude) {
+        showStatus('Min altitude cannot exceed max altitude', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/zones/${currentZone.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates)
+        });
+
+        if (response.ok) {
+          const updatedZone = await response.json();
+
+          // Update local data
+          const index = zones.findIndex(z => z.id === currentZone.id);
+          if (index !== -1) {
+            zones[index] = updatedZone;
+            currentZone = updatedZone;
+          }
+
+          // Update list item
+          const listItem = document.querySelector(`[data-zone-id="${currentZone.id}"]`);
+          if (listItem) {
+            listItem.querySelector('.zone-list-name').childNodes[0].textContent = updatedZone.name + ' ';
+            const statsText = `ID: ${updatedZone.id} | `;
+            if (updatedZone.min_altitude !== null || updatedZone.max_altitude !== null) {
+              listItem.querySelector('.zone-list-stats').textContent =
+                statsText + `ALT: ${updatedZone.min_altitude || 0}-${updatedZone.max_altitude || '∞'} ft`;
+            } else {
+              listItem.querySelector('.zone-list-stats').textContent = statsText + 'NO ALT LIMITS';
+            }
+          }
+
+          showStatus('Zone updated successfully', 'success');
+          pendingPolygon = null;
+          cancelEdit();
+          populateDetails();
+        } else {
+          const error = await response.json();
+          showStatus(error.error || 'Failed to update zone', 'error');
+        }
+      } catch (error) {
+        console.error('Error saving changes:', error);
+        showStatus('Failed to save changes', 'error');
+      }
+    }
+
+    async function deleteZone() {
+      if (!currentZone) return;
+
+      if (!confirm(`Delete zone "${currentZone.name}"? This action cannot be undone.`)) {
+        return;
+      }
+
+      showStatus('Zone deletion not implemented yet', 'error');
+    }
+
+    function formatPolygon() {
+      const input = document.getElementById('polygonInput').value.trim();
+      try {
+        const polygon = JSON.parse(input);
+        document.getElementById('polygonInput').value = JSON.stringify(polygon, null, 2);
+        validatePolygon(); // Re-validate after formatting
+      } catch (error) {
+        showStatus('Invalid JSON - cannot format', 'error');
+      }
+    }
+
+    function copyPolygon() {
+      const input = document.getElementById('polygonInput');
+      input.select();
+      document.execCommand('copy');
+      showStatus('Polygon data copied to clipboard', 'success');
+    }
+
+    function showStatus(message, type = 'success') {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message ${type} visible`;
+
+      setTimeout(() => {
+        statusEl.classList.remove('visible');
+      }, 3000);
+    }
+
+    // Update live indicators for all zones periodically
+    setInterval(async () => {
+      for (const zone of zones) {
+        try {
+          const response = await fetch(`/api/zones/${zone.id}/stats`);
+          if (response.ok) {
+            const stats = await response.json();
+            const indicator = document.getElementById(`live-${zone.id}`);
+            if (indicator) {
+              indicator.classList.toggle('inactive', stats.currentAircraft === 0);
+            }
+          }
+        } catch (error) {
+          console.error(`Error fetching stats for zone ${zone.id}:`, error);
+        }
+      }
+    }, 10000);
+  </script>
+
+  <div style="position: fixed; bottom: 20px; left: 20px;">
+    <a href="/admin" style="color: var(--green-medium); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-dark); background: rgba(0, 255, 0, 0.02);">← Back to Admin Dashboard</a>
+  </div>
+
+  <div style="position: fixed; bottom: 20px; right: 20px;">
+    <a href="/admin/zones/editor" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Open Zone Editor →</a>
+  </div>
+</body>
+</html>

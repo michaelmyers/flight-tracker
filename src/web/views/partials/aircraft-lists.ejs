@@ -1,0 +1,231 @@
+<!-- Aircraft Lists Component -->
+<div style="flex: 1; min-width: 0;">
+  <!-- Compact Status Bar for Small Screens -->
+  <div class="aircraft-status-compact" style="display: none; padding: 10px; background: rgba(0, 255, 0, 0.05); border: 1px solid var(--green-dark); margin-bottom: 15px; font-size: 14px;">
+    <% if (typeof landedAircraft !== 'undefined' && landedAircraft) { %>
+      <span style="margin-right: 20px;">LANDED: <span style="color: var(--green-medium);"><%= landedAircraft.length %></span></span>
+    <% } %>
+    <% if (recentAircraft) { %>
+      <span>EXITED: <span style="color: var(--green-dim);"><%= recentAircraft.length %></span></span>
+    <% } %>
+  </div>
+
+  <!-- Active Aircraft Section (Flying with ADS-B data) -->
+  <% if (typeof activeAircraft !== 'undefined' && activeAircraft && activeAircraft.length > 0) { %>
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: var(--green-bright); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+        ACTIVE AIRCRAFT IN ZONE (<%= activeAircraft.length %>)
+      </h3>
+      <div id="active-aircraft-container" class="aircraft-grid">
+        <% activeAircraft.forEach(ac => { %>
+          <div class="aircraft-item active-aircraft" data-icao24="<%= ac.icao24 %>" style="border-color: var(--green-bright); background: rgba(0, 255, 0, 0.05);">
+            <div class="aircraft-id">
+              <%= ac.icao24.toUpperCase() %>
+              <% if (ac.callsign) { %>
+                <div style="font-size: 16px; color: var(--green-medium); margin-top: 5px;">
+                  <%= ac.callsign %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-details">
+              <div class="detail-row">
+                <span class="detail-label">ALT:</span>
+                <span class="detail-value"><%= ac.altitude ? ac.altitude.toLocaleString() : '--' %> ft</span>
+                <span class="detail-label">SPD:</span>
+                <span class="detail-value"><%= ac.speed !== null && ac.speed !== undefined ? Math.round(ac.speed) : '--' %> kts</span>
+                <span class="detail-label">HDG:</span>
+                <span class="detail-value"><%= ac.track !== null && ac.track !== undefined ? Math.round(ac.track) + '°' : '--' %></span>
+              </div>
+              <% if (ac.manufacturer || ac.model) { %>
+                <div class="detail-row">
+                  <span class="detail-label">TYPE:</span>
+                  <span class="detail-value">
+                    <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                  </span>
+                </div>
+              <% } %>
+              <% if (ac.operator) { %>
+                <div class="detail-row">
+                  <span class="detail-label">OPER:</span>
+                  <span class="detail-value"><%= ac.operator %></span>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-time">
+              <div style="color: var(--green-medium);">ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Landed Aircraft Section (In zone but on ground) -->
+  <% if (typeof landedAircraft !== 'undefined' && landedAircraft && landedAircraft.length > 0) { %>
+    <div class="landed-section" style="margin-bottom: 30px;">
+      <h3 style="color: var(--green-medium); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+        LANDED AIRCRAFT IN ZONE (<%= landedAircraft.length %>)
+      </h3>
+      <div id="landed-aircraft-container" class="aircraft-grid">
+        <% landedAircraft.forEach(ac => { %>
+          <div class="aircraft-item landed-aircraft" data-icao24="<%= ac.icao24 %>" style="opacity: 0.7;">
+            <div class="aircraft-id">
+              <%= ac.icao24.toUpperCase() %>
+              <% if (ac.callsign) { %>
+                <div style="font-size: 16px; color: var(--green-dark); margin-top: 5px;">
+                  <%= ac.callsign %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-details">
+              <div class="detail-row">
+                <span class="detail-label">ALT:</span>
+                <span class="detail-value"><%= ac.altitude !== null && ac.altitude !== undefined ? ac.altitude : 'GND' %> ft</span>
+                <span class="detail-label">SPD:</span>
+                <span class="detail-value"><%= ac.speed !== null && ac.speed !== undefined ? Math.round(ac.speed) : '0' %> kts</span>
+                <span class="detail-label">STATUS:</span>
+                <span class="detail-value" style="color: var(--green-dark);">ON GROUND</span>
+              </div>
+              <% if (ac.manufacturer || ac.model) { %>
+                <div class="detail-row">
+                  <span class="detail-label">TYPE:</span>
+                  <span class="detail-value">
+                    <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                  </span>
+                </div>
+              <% } %>
+              <% if (ac.operator) { %>
+                <div class="detail-row">
+                  <span class="detail-label">OPER:</span>
+                  <span class="detail-value"><%= ac.operator %></span>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-time">
+              <div style="color: var(--green-dark);">LANDED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Current Aircraft Section (for backward compatibility, hidden if new sections are shown) -->
+  <% if ((typeof activeAircraft === 'undefined' || !activeAircraft) && currentAircraft && currentAircraft.length > 0) { %>
+    <div style="margin-bottom: 30px;">
+      <h3 style="color: var(--green-bright); margin-bottom: 15px; font-size: 24px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+        CURRENT AIRCRAFT IN ZONE
+      </h3>
+      <div id="current-aircraft-container" class="aircraft-grid">
+        <% currentAircraft.forEach(ac => { %>
+          <div class="aircraft-item current-aircraft" data-icao24="<%= ac.icao24 %>">
+            <div class="aircraft-id">
+              <%= ac.icao24.toUpperCase() %>
+              <% if (ac.callsign) { %>
+                <div style="font-size: 16px; color: var(--green-dim); margin-top: 5px;">
+                  <%= ac.callsign %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-details">
+              <div class="detail-row">
+                <span class="detail-label">ALT:</span>
+                <span class="detail-value"><%= ac.altitude || '--' %> ft</span>
+                <span class="detail-label">SPD:</span>
+                <span class="detail-value"><%= ac.speed ? Math.round(ac.speed) : '--' %> kts</span>
+                <span class="detail-label">HDG:</span>
+                <span class="detail-value"><%= ac.track ? Math.round(ac.track) + '°' : '--' %></span>
+              </div>
+              <% if (ac.manufacturer || ac.model) { %>
+                <div class="detail-row">
+                  <span class="detail-label">TYPE:</span>
+                  <span class="detail-value">
+                    <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                  </span>
+                </div>
+              <% } %>
+              <% if (ac.operator) { %>
+                <div class="detail-row">
+                  <span class="detail-label">OPER:</span>
+                  <span class="detail-value"><%= ac.operator %></span>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-time">
+              <div>ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+              <div style="color: var(--green-bright);">IN ZONE</div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- Exited Aircraft Section -->
+  <% if (recentAircraft && recentAircraft.length > 0) { %>
+    <div class="exited-section" style="margin-bottom: 30px;">
+      <h3 style="color: var(--green-dim); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+        EXITED AIRCRAFT (<%= recentAircraft.length %>)
+      </h3>
+      <div id="recent-aircraft-container" class="aircraft-grid">
+        <% recentAircraft.forEach(ac => { %>
+          <div class="aircraft-item recent-aircraft" data-icao24="<%= ac.icao24 %>" style="opacity: 0.7;">
+            <div class="aircraft-id">
+              <%= ac.icao24.toUpperCase() %>
+              <% if (ac.callsign) { %>
+                <div style="font-size: 16px; color: var(--green-dim); margin-top: 5px;">
+                  <%= ac.callsign %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-details">
+              <div class="detail-row">
+                <span class="detail-label">ALT:</span>
+                <span class="detail-value"><%= ac.altitude || '--' %> ft</span>
+                <span class="detail-label">SPD:</span>
+                <span class="detail-value"><%= ac.speed ? Math.round(ac.speed) : '--' %> kts</span>
+                <span class="detail-label">HDG:</span>
+                <span class="detail-value"><%= ac.track ? Math.round(ac.track) + '°' : '--' %></span>
+              </div>
+              <% if (ac.manufacturer || ac.model) { %>
+                <div class="detail-row">
+                  <span class="detail-label">TYPE:</span>
+                  <span class="detail-value">
+                    <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                  </span>
+                </div>
+              <% } %>
+              <% if (ac.operator) { %>
+                <div class="detail-row">
+                  <span class="detail-label">OPER:</span>
+                  <span class="detail-value"><%= ac.operator %></span>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="aircraft-time">
+              <div>ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+              <div style="color: #ff6666;">EXITED: <%= new Date(ac.exitedAt).toTimeString().split(' ')[0] %></div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
+  <!-- No Data Message -->
+  <% if ((!currentAircraft || currentAircraft.length === 0) && (!recentAircraft || recentAircraft.length === 0)) { %>
+    <div class="no-data">NO AIRCRAFT ACTIVITY IN LAST <%= timeRange %> <%= timeRange === 1 ? 'HOUR' : 'HOURS' %></div>
+  <% } %>
+
+  <div id="loading" class="loading" style="display: none;">
+    UPDATING...
+  </div>
+</div>

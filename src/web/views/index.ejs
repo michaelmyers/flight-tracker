@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // ZONE SELECTOR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <link rel="stylesheet" href="/public/css/crt-transition.css">
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1>FLIGHT TRACKER</h1>
+        <div class="subtitle">ZONE MONITORING SYSTEM V1.0</div>
+      </div>
+
+      <div class="status-bar">
+        <div class="status-item">
+          <div class="status-indicator"></div>
+          <span>SYSTEM ONLINE</span>
+        </div>
+        <div class="status-item">
+          <span id="current-time">--:--:--</span>
+        </div>
+      </div>
+
+      <div class="zone-selection">
+        <h2 style="margin-bottom: 20px; color: var(--green-bright);">SELECT MONITORING ZONE</h2>
+        <div class="area-selector">
+          <% if (areas && areas.length > 0) { %>
+            <% areas.forEach(area => { %>
+              <a href="/area/<%= area.id %>" class="button area-button" data-area-id="<%= area.id %>">
+                <%= area.name.toUpperCase() %>
+              </a>
+            <% }) %>
+          <% } else { %>
+            <div class="no-data">NO ZONES CONFIGURED</div>
+          <% } %>
+        </div>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="margin-bottom: 20px; color: var(--green-bright);">ANTENNA RADAR</h2>
+        <a href="/radar" class="button" style="padding: 20px 40px; font-size: 24px;">
+          OPEN RADAR DISPLAY
+        </a>
+      </div>
+
+      <div style="margin-top: 30px;">
+        <h2 style="margin-bottom: 20px; color: var(--green-bright);">ADMINISTRATION</h2>
+        <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+          <a href="/admin" class="button" style="padding: 20px 40px; font-size: 24px;">
+            ADMIN DASHBOARD
+          </a>
+        </div>
+      </div>
+
+      <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--green-dark);">
+        <div style="color: var(--green-dim); font-size: 16px;">
+          <div>SYSTEM STATUS: OPERATIONAL</div>
+          <div>TRACKING MODE: ACTIVE</div>
+          <div>DATA FEED: PIAWARE DUMP1090</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function updateTime() {
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+      document.getElementById('current-time').textContent = time;
+    }
+
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    document.querySelectorAll('.area-button').forEach(button => {
+      button.addEventListener('mouseenter', () => {
+        const beep = new Audio();
+        beep.volume = 0.1;
+      });
+    });
+  </script>
+  <script src="/public/js/crt-transition.js"></script>
+</body>
+</html>

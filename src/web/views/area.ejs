@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // <%= area.name.toUpperCase() %>
+      <%= typeof sessionId !=='undefined' ? ' [' + sessionId + ']' : '' %>
+  </title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <link rel="stylesheet" href="/public/css/crt-transition.css">
+</head>
+
+<body>
+  <div class="crt-container">
+    <% if (typeof sessionId !=='undefined' && typeof hasController !=='undefined' ) { %>
+      <!-- External Control Status Bar (only for controlled sessions) -->
+      <div class="system-status"
+        style="position: fixed; bottom: 10px; right: 10px; background: rgba(0, 20, 0, 0.9); border: 1px solid #00ff00; padding: 5px 10px; font-size: 16px; color: #00ff00; display: flex; gap: 10px; align-items: center; z-index: 1000;">
+        <div class="status-item" style="display: flex; align-items: center; gap: 5px;">
+          <div class="status-indicator" id="area-status-indicator"
+            style="width: 8px; height: 8px; background: #00ff00; border-radius: 50%; animation: pulse 2s infinite;">
+          </div>
+          <span>LIVE</span>
+        </div>
+        <span class="status-separator" style="color: #00ff00; opacity: 0.5;">|</span>
+        <div class="status-item">
+          <span>S:<%= sessionId %></span>
+        </div>
+        <% if (hasController) { %>
+          <span class="status-separator" style="color: #00ff00; opacity: 0.5;">|</span>
+          <div class="status-item" style="display: flex; align-items: center; gap: 5px;">
+            <div class="status-indicator warning"
+              style="width: 8px; height: 8px; background: #ffff00; border-radius: 50%;"></div>
+            <span>EXT</span>
+          </div>
+          <% } %>
+            <span class="status-separator" style="color: #00ff00; opacity: 0.5;">|</span>
+            <div class="status-item" id="ws-status" style="display: flex; align-items: center; gap: 5px;">
+              <div class="status-indicator" id="ws-indicator"
+                style="width: 8px; height: 8px; background: #00ff00; border-radius: 50%; animation: pulse 2s infinite;">
+              </div>
+              <span>WS</span>
+            </div>
+      </div>
+
+      <style>
+        @keyframes pulse {
+
+          0%,
+          100% {
+            opacity: 1;
+          }
+
+          50% {
+            opacity: 0.5;
+          }
+        }
+
+        .status-indicator.error {
+          background: #ff0000 !important;
+          animation: none !important;
+        }
+      </style>
+      <% } %>
+
+        <div class="screen-border">
+          <div class="header">
+            <h1>
+              <%= area.name.toUpperCase() %> <span class="header-info">ID: <%= area.id %></span>
+            </h1>
+          </div>
+
+          <div class="status-bar">
+            <div class="status-item">
+              <div class="status-indicator"></div>
+              <span>TRACKING ACTIVE</span>
+            </div>
+            <div class="status-item">
+              <span>IN ZONE: <span id="current-count">
+                  <%= currentAircraft.length %>
+                </span></span>
+            </div>
+            <div class="status-item">
+              <span>RECENT: <span id="recent-count">
+                  <%= recentAircraft.length %>
+                </span></span>
+            </div>
+            <div class="status-item">
+              <span>RANGE: <span id="time-range-display">
+                  <%= timeRange %>
+                </span> <span id="time-range-unit">
+                  <%= timeRange===1 ? 'HOUR' : 'HOURS' %>
+                </span></span>
+            </div>
+            <div class="status-item">
+              <span id="current-time">--:--:--</span>
+            </div>
+          </div>
+
+          <!-- Main Content Container -->
+          <div style="display: flex; gap: 20px;">
+            <%- include('partials/mini-radar') %>
+              <%- include('partials/aircraft-lists') %>
+          </div>
+
+          <!-- Navigation Buttons (hidden for controlled sessions) -->
+          <% if (typeof sessionId==='undefined' || !hasController) { %>
+            <div
+              style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--green-dark); display: flex; gap: 10px;">
+              <a href="/" class="button">&lt; BACK TO ZONES</a>
+              <a href="/radar" class="button">ANTENNA RADAR</a>
+            </div>
+            <% } %>
+        </div>
+  </div>
+
+  <script src="/public/js/aircraft-tracker.js"></script>
+
+  <script>
+    // Set up global variables
+    const areaId = <%= area.id %>;
+    const timeRange = <%= timeRange %>;
+    const areaPolygon = <%- JSON.stringify(JSON.parse(area.polygon)) %>;
+    const areaName = '<%= area.name %>';
+
+    <% if (typeof sessionId !== 'undefined' && typeof hasController !== 'undefined') { %>
+      // Set global variables for external control
+      window.areaId = areaId;
+      window.timeRange = timeRange;
+      window.sessionId = '<%= sessionId %>';
+      window.isControlled = <%= hasController ? 'true' : 'false' %>;
+      const sessionId = window.sessionId;
+      const isControlled = window.isControlled;
+    <% } else { %>
+    const sessionId = 'default';
+      const isControlled = false;
+    <% } %>
+
+      // Create a single shared WebSocket connection
+      window.sharedWebSocket = null;
+    window.wsMessageHandlers = [];
+
+    function createSharedWebSocket() {
+      if (window.sharedWebSocket && window.sharedWebSocket.readyState === WebSocket.OPEN) {
+        return window.sharedWebSocket;
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
+
+      ws.onopen = () => {
+        console.log('Shared WebSocket connected');
+
+        // Update status indicator if present
+        const wsIndicator = document.getElementById('ws-indicator');
+        if (wsIndicator) {
+          wsIndicator.classList.remove('error');
+        }
+
+        // Notify all handlers
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onOpen) handler.onOpen(ws);
+        });
+      };
+
+      ws.onmessage = (event) => {
+        // Pass message to all registered handlers
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onMessage) handler.onMessage(event);
+        });
+      };
+
+      ws.onerror = (error) => {
+        console.error('Shared WebSocket error:', error);
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onError) handler.onError(error);
+        });
+      };
+
+      ws.onclose = () => {
+        console.log('Shared WebSocket closed');
+
+        // Update status indicator if present
+        const wsIndicator = document.getElementById('ws-indicator');
+        if (wsIndicator) {
+          wsIndicator.classList.add('error');
+        }
+
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onClose) handler.onClose();
+        });
+
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          window.sharedWebSocket = createSharedWebSocket();
+        }, 3000);
+      };
+
+      window.sharedWebSocket = ws;
+      return ws;
+    }
+
+    // Initialize tracker (but don't let it create its own WebSocket)
+    initializeTracker(areaId, timeRange);
+
+    // Update time display
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      document.getElementById('current-time').textContent = timeStr;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // Create the shared WebSocket
+    createSharedWebSocket();
+  </script>
+
+  <%- include('partials/mini-radar-script') %>
+
+    <% if (typeof sessionId !=='undefined' && typeof hasController !=='undefined' ) { %>
+      <script src="/public/js/external-control-client.js"></script>
+      <% } %>
+</body>
+
+</html>

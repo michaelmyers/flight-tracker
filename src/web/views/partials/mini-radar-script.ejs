@@ -1,0 +1,451 @@
+<script>
+  // Mini Radar Implementation
+  window.MiniRadar = class MiniRadar {
+    constructor() {
+      this.canvas = document.getElementById('mini-radar-canvas');
+      this.ctx = this.canvas.getContext('2d');
+      // Dynamic sizing based on actual canvas dimensions
+      this.centerX = this.canvas.width / 2;
+      this.centerY = this.canvas.height / 2;
+      this.radius = (Math.min(this.canvas.width, this.canvas.height) / 2) * 0.8;
+      this.aircraft = new Map();
+      this.zoneCenter = this.calculateZoneCenter();
+      this.range = this.calculateOptimalRange();
+      this.pixelsPerMile = this.radius / this.range;
+      this.selectedAircraft = null;
+      this.altitudeHistory = new Map();
+
+      this.setupEventListeners();
+      this.setupWebSocket();
+      this.draw();
+      setInterval(() => this.draw(), 1000);
+
+      // Update range display
+      document.getElementById('radar-range').textContent = this.range.toFixed(1);
+      const bottomRange = document.getElementById('radar-range-bottom');
+      if (bottomRange) bottomRange.textContent = this.range.toFixed(1);
+    }
+
+    setupEventListeners() {
+      this.canvas.addEventListener('click', (e) => {
+        const rect = this.canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        this.handleRadarClick(x, y);
+      });
+    }
+
+    handleRadarClick(x, y) {
+      let closestAircraft = null;
+      let closestDistance = 15;
+
+      this.aircraft.forEach((ac, hex) => {
+        const point = this.latLonToRadar(ac.lat, ac.lon);
+        const distance = Math.sqrt(Math.pow(x - point.x, 2) + Math.pow(y - point.y, 2));
+
+        if (distance < closestDistance) {
+          closestDistance = distance;
+          closestAircraft = ac;
+        }
+      });
+
+      if (closestAircraft) {
+        this.selectAircraft(closestAircraft);
+      } else {
+        this.clearSelection();
+      }
+    }
+
+    selectAircraft(aircraft) {
+      this.selectedAircraft = aircraft;
+      this.draw();
+    }
+
+    clearSelection() {
+      this.selectedAircraft = null;
+      this.draw();
+    }
+
+    calculateZoneCenter() {
+      if (!areaPolygon || areaPolygon.length === 0) {
+        return { lat: 38.9072, lon: -77.0369 };
+      }
+
+      let sumLat = 0, sumLon = 0;
+      areaPolygon.forEach(coord => {
+        sumLat += coord[0];
+        sumLon += coord[1];
+      });
+
+      return {
+        lat: sumLat / areaPolygon.length,
+        lon: sumLon / areaPolygon.length
+      };
+    }
+
+    calculateOptimalRange() {
+      if (!areaPolygon || areaPolygon.length === 0) {
+        return 5;
+      }
+
+      let maxDistance = 0;
+      const center = this.zoneCenter;
+
+      areaPolygon.forEach(coord => {
+        const dist = this.getDistanceFromCenter(coord[0], coord[1]);
+        if (dist > maxDistance) {
+          maxDistance = dist;
+        }
+      });
+
+      return Math.ceil(maxDistance * 1.2);
+    }
+
+    getDistanceFromCenter(lat, lon) {
+      const R = 3959;
+      const dLat = (lat - this.zoneCenter.lat) * Math.PI / 180;
+      const dLon = (lon - this.zoneCenter.lon) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(this.zoneCenter.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    isPointInZone(lat, lon) {
+      if (!areaPolygon || areaPolygon.length < 3) return false;
+
+      let inside = false;
+      for (let i = 0, j = areaPolygon.length - 1; i < areaPolygon.length; j = i++) {
+        const xi = areaPolygon[i][1], yi = areaPolygon[i][0];
+        const xj = areaPolygon[j][1], yj = areaPolygon[j][0];
+        const intersect = ((yi > lat) !== (yj > lat)) &&
+                        (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+        if (intersect) inside = !inside;
+      }
+      return inside;
+    }
+
+    setupWebSocket() {
+      // Register handlers with the shared WebSocket
+      const handler = {
+        onOpen: (ws) => {
+          console.log('Mini radar using shared WebSocket');
+          ws.send(JSON.stringify({
+            type: 'SUBSCRIBE_AIRCRAFT',
+            sessionId: typeof sessionId !== 'undefined' ? sessionId : 'default'
+          }));
+        },
+        onMessage: (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'AIRCRAFT_UPDATE' && data.aircraft) {
+              this.updateAircraft(data.aircraft);
+            }
+          } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+          }
+        },
+        onError: (error) => {
+          console.error('Mini radar WebSocket error:', error);
+        },
+        onClose: () => {
+          console.log('Mini radar WebSocket disconnected');
+        }
+      };
+
+      // Add handler to the shared handlers array
+      if (!window.wsMessageHandlers) {
+        window.wsMessageHandlers = [];
+      }
+      window.wsMessageHandlers.push(handler);
+
+      // If WebSocket is already open, call onOpen immediately
+      if (window.sharedWebSocket && window.sharedWebSocket.readyState === WebSocket.OPEN) {
+        handler.onOpen(window.sharedWebSocket);
+      }
+    }
+
+    updateAircraft(aircraftList) {
+      this.aircraft.clear();
+
+      aircraftList.forEach(ac => {
+        if (ac.lat && ac.lon && ac.hex) {
+          const inZone = this.isPointInZone(ac.lat, ac.lon);
+
+          this.aircraft.set(ac.hex, {
+            hex: ac.hex,
+            callsign: ac.flight?.trim() || null,
+            lat: ac.lat,
+            lon: ac.lon,
+            altitude: ac.alt_baro || ac.alt_geom || null,
+            speed: ac.gs || null,
+            track: ac.track || null,
+            inZone: inZone
+          });
+        }
+      });
+
+      const targetCount = Array.from(this.aircraft.values()).filter(ac => {
+        const dist = this.getDistanceFromCenter(ac.lat, ac.lon);
+        return dist <= this.range * 1.1;
+      }).length;
+
+      document.getElementById('radar-target-count').textContent = targetCount;
+      const targetsDisplay = document.getElementById('radar-targets');
+      if (targetsDisplay) targetsDisplay.textContent = targetCount;
+      this.draw();
+    }
+
+    latLonToRadar(lat, lon) {
+      const center = this.zoneCenter;
+      const latDiff = lat - center.lat;
+      const lonDiff = lon - center.lon;
+      const milesLat = latDiff * 69;
+      const milesLon = lonDiff * 69 * Math.cos(center.lat * Math.PI / 180);
+      const x = this.centerX + (milesLon * this.pixelsPerMile);
+      const y = this.centerY - (milesLat * this.pixelsPerMile);
+      return { x, y };
+    }
+
+    draw() {
+      this.ctx.clearRect(0, 0, 500, 500);
+      this.ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+      this.ctx.fillRect(0, 0, 500, 500);
+
+      // Draw range rings
+      this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+      this.ctx.lineWidth = 1;
+      for (let i = 1; i <= 4; i++) {
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, (this.radius / 4) * i, 0, 2 * Math.PI);
+        this.ctx.stroke();
+      }
+
+      // Draw cross hairs
+      this.ctx.beginPath();
+      this.ctx.moveTo(this.centerX - this.radius, this.centerY);
+      this.ctx.lineTo(this.centerX + this.radius, this.centerY);
+      this.ctx.moveTo(this.centerX, this.centerY - this.radius);
+      this.ctx.lineTo(this.centerX, this.centerY + this.radius);
+      this.ctx.stroke();
+
+      // Draw zone polygon
+      if (areaPolygon && areaPolygon.length > 2) {
+        this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+        this.ctx.lineWidth = 2;
+        this.ctx.beginPath();
+
+        areaPolygon.forEach((coord, i) => {
+          const point = this.latLonToRadar(coord[0], coord[1]);
+          if (i === 0) {
+            this.ctx.moveTo(point.x, point.y);
+          } else {
+            this.ctx.lineTo(point.x, point.y);
+          }
+        });
+
+        this.ctx.closePath();
+        this.ctx.stroke();
+        this.ctx.fillStyle = 'rgba(0, 255, 0, 0.05)';
+        this.ctx.fill();
+      }
+
+      // Draw center point
+      this.ctx.fillStyle = '#00ff00';
+      this.ctx.beginPath();
+      this.ctx.arc(this.centerX, this.centerY, 3, 0, 2 * Math.PI);
+      this.ctx.fill();
+
+      // Draw aircraft
+      this.aircraft.forEach((ac, hex) => {
+        const point = this.latLonToRadar(ac.lat, ac.lon);
+        const dist = Math.sqrt(Math.pow(point.x - this.centerX, 2) + Math.pow(point.y - this.centerY, 2));
+
+        if (dist <= this.radius) {
+          const isSelected = this.selectedAircraft && this.selectedAircraft.hex === ac.hex;
+
+          if (isSelected) {
+            this.ctx.strokeStyle = '#00ff00';
+            this.ctx.lineWidth = 2;
+            this.ctx.beginPath();
+            this.ctx.arc(point.x, point.y, 15, 0, 2 * Math.PI);
+            this.ctx.stroke();
+
+            this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+            this.ctx.lineWidth = 1;
+            this.ctx.setLineDash([5, 5]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(this.centerX, this.centerY);
+            this.ctx.lineTo(point.x, point.y);
+            this.ctx.stroke();
+            this.ctx.setLineDash([]);
+          }
+
+          this.ctx.fillStyle = isSelected ? '#00ff00' : 'rgba(0, 255, 0, 0.7)';
+          this.ctx.save();
+          this.ctx.translate(point.x, point.y);
+          this.ctx.rotate((ac.track || 0) * Math.PI / 180);
+
+          const scale = isSelected ? 1.5 : 1;
+          this.ctx.beginPath();
+          this.ctx.moveTo(0, -5 * scale);
+          this.ctx.lineTo(-3 * scale, 3 * scale);
+          this.ctx.lineTo(0, 1 * scale);
+          this.ctx.lineTo(3 * scale, 3 * scale);
+          this.ctx.closePath();
+          this.ctx.fill();
+
+          this.ctx.restore();
+
+          if (isSelected) {
+            this.drawInfoLabel(ac);
+          }
+        }
+      });
+
+      if (!this.selectedAircraft) {
+        const label = document.getElementById('mini-radar-info-label');
+        if (label) label.remove();
+      }
+    }
+
+    drawInfoLabel(aircraft) {
+      let label = document.getElementById('mini-radar-info-label');
+      if (!label) {
+        label = document.createElement('div');
+        label.id = 'mini-radar-info-label';
+        label.style.position = 'absolute';
+        label.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+        label.style.border = '1px solid #00ff00';
+        label.style.padding = '6px 10px';
+        label.style.fontSize = '14px';
+        label.style.fontFamily = 'VT323, monospace';
+        label.style.color = '#00ff00';
+        label.style.pointerEvents = 'none';
+        label.style.zIndex = '1000';
+        label.style.whiteSpace = 'nowrap';
+        label.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+        label.style.transition = 'none'; // No transition for smooth following
+        this.canvas.parentElement.appendChild(label);
+      }
+
+      const altTrend = this.getAltitudeTrend(aircraft);
+      let altSymbol = '';
+      let trendClass = '';
+      if (altTrend === 'climbing') {
+        altSymbol = ' ↑';
+        trendClass = 'climbing';
+      } else if (altTrend === 'descending') {
+        altSymbol = ' ↓';
+        trendClass = 'descending';
+      }
+
+      const callsign = aircraft.callsign || aircraft.hex.toUpperCase();
+      const altitude = aircraft.altitude ? `${aircraft.altitude.toLocaleString()}` : '----';
+      const speed = aircraft.speed ? `${Math.round(aircraft.speed)}` : '---';
+
+      // Format similar to main radar display
+      label.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 4px;">
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <span style="font-weight: bold; color: #00ff00; min-width: 80px;">${callsign}</span>
+            <span style="color: ${altTrend === 'climbing' ? '#00ff00' : altTrend === 'descending' ? '#ffaa00' : '#00ff00'};">
+              ${altitude}ft${altSymbol}
+            </span>
+            <span>${speed}kt</span>
+          </div>
+        </div>
+      `;
+
+      // Update position to follow aircraft
+      const point = this.latLonToRadar(aircraft.lat, aircraft.lon);
+      const canvasRect = this.canvas.getBoundingClientRect();
+      const containerRect = this.canvas.parentElement.getBoundingClientRect();
+      const offsetX = canvasRect.left - containerRect.left;
+      const offsetY = canvasRect.top - containerRect.top;
+
+      // Position label offset from aircraft
+      let labelX = point.x + offsetX + 25;
+      let labelY = point.y + offsetY - 20;
+
+      // Temporarily position to get dimensions
+      label.style.left = `${labelX}px`;
+      label.style.top = `${labelY}px`;
+
+      // Get label dimensions after content update
+      const labelRect = label.getBoundingClientRect();
+      const containerBounds = containerRect;
+
+      // Adjust if going off screen right
+      if (labelX + labelRect.width - containerRect.left > containerBounds.width) {
+        labelX = point.x + offsetX - labelRect.width + containerRect.left - 25;
+      }
+
+      // Adjust if going off screen top
+      if (labelY < 0) {
+        labelY = point.y + offsetY + 25;
+      }
+
+      // Adjust if going off screen bottom
+      if (labelY + labelRect.height - containerRect.top > containerBounds.height) {
+        labelY = point.y + offsetY - labelRect.height + containerRect.top - 25;
+      }
+
+      // Apply final position
+      label.style.left = `${labelX}px`;
+      label.style.top = `${labelY}px`;
+    }
+
+    getAltitudeTrend(aircraft) {
+      if (!this.altitudeHistory) this.altitudeHistory = new Map();
+
+      const history = this.altitudeHistory.get(aircraft.hex);
+      const currentAlt = aircraft.altitude || 0;
+
+      if (!history || !history.length) {
+        this.altitudeHistory.set(aircraft.hex, [{
+          altitude: currentAlt,
+          time: Date.now()
+        }]);
+        return 'level';
+      }
+
+      const now = Date.now();
+      history.push({ altitude: currentAlt, time: now });
+
+      if (history.length > 5) {
+        history.shift();
+      }
+
+      if (history.length < 2) return 'level';
+
+      let totalChange = 0;
+      let samples = 0;
+
+      for (let i = 1; i < history.length; i++) {
+        const timeDiff = (history[i].time - history[i-1].time) / 1000;
+        if (timeDiff > 0) {
+          const altChange = history[i].altitude - history[i-1].altitude;
+          const ratePerMin = (altChange / timeDiff) * 60;
+          totalChange += ratePerMin;
+          samples++;
+        }
+      }
+
+      if (samples === 0) return 'level';
+
+      const avgRatePerMin = totalChange / samples;
+
+      if (avgRatePerMin > 100) return 'climbing';
+      if (avgRatePerMin < -100) return 'descending';
+      return 'level';
+    }
+  }
+
+  // Initialize mini radar when page loads
+  document.addEventListener('DOMContentLoaded', () => {
+    // Create mini radar instance and make it globally accessible for external control
+    window.miniRadarInstance = new MiniRadar();
+  });
+</script>

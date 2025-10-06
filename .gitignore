@@ -1,0 +1,24 @@
+# Node.js
+node_modules/
+dist/
+*.log
+*.tsbuildinfo
+
+# Testing
+coverage/
+
+# dotenv
+.env
+
+# SQLite DB
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# VSCode / IDE
+.vscode/
+*.swp
+
+# MacOS
+.DS_Store

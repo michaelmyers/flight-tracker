@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>External Control Debug</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #000;
+      color: #0f0;
+      padding: 20px;
+    }
+    .section {
+      border: 1px solid #0f0;
+      padding: 10px;
+      margin: 10px 0;
+    }
+    button {
+      background: #001;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 5px 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #002;
+    }
+    #log {
+      height: 300px;
+      overflow-y: scroll;
+      border: 1px solid #0f0;
+      padding: 10px;
+      background: #001;
+      white-space: pre;
+      font-size: 12px;
+    }
+    .log-entry {
+      margin: 2px 0;
+    }
+    .log-sent { color: #ff0; }
+    .log-received { color: #0ff; }
+    .log-error { color: #f00; }
+    .log-info { color: #0f0; }
+  </style>
+</head>
+<body>
+  <h1>External Control WebSocket Debug</h1>
+
+  <div class="section">
+    <h2>Connection</h2>
+    <input type="text" id="sessionId" placeholder="Session ID (e.g., 1234)" value="1234">
+    <button onclick="connectViewer()">Connect as Viewer</button>
+    <button onclick="connectController()">Connect as Controller</button>
+    <button onclick="disconnect()">Disconnect</button>
+    <div>Status: <span id="status">Disconnected</span></div>
+  </div>
+
+  <div class="section">
+    <h2>Control Commands</h2>
+    <button onclick="sendMode('forward')">MODE Forward</button>
+    <button onclick="sendMode('backward')">MODE Backward</button>
+    <br>
+    <button onclick="sendRange('forward')">RANGE Increase</button>
+    <button onclick="sendRange('backward')">RANGE Decrease</button>
+    <br>
+    <button onclick="sendZones()">Toggle ZONES</button>
+  </div>
+
+  <div class="section">
+    <h2>Raw Message</h2>
+    <textarea id="rawMessage" rows="3" cols="50">{"type":"STATE_REQUEST","sessionId":"1234"}</textarea>
+    <button onclick="sendRaw()">Send Raw</button>
+  </div>
+
+  <div class="section">
+    <h2>Log</h2>
+    <div id="log"></div>
+  </div>
+
+  <script>
+    let ws = null;
+    let sessionId = '1234';
+
+    function log(message, type = 'info') {
+      const logDiv = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+      logDiv.appendChild(entry);
+      logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    function updateStatus(status) {
+      document.getElementById('status').textContent = status;
+    }
+
+    function connect(type) {
+      sessionId = document.getElementById('sessionId').value;
+
+      if (ws) {
+        ws.close();
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}`;
+
+      log(`Connecting to ${wsUrl}...`, 'info');
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        log('WebSocket connected', 'info');
+        updateStatus('Connected');
+
+        const registerMsg = {
+          type: type,
+          sessionId: sessionId
+        };
+
+        log(`Sending: ${JSON.stringify(registerMsg)}`, 'sent');
+        ws.send(JSON.stringify(registerMsg));
+      };
+
+      ws.onmessage = (event) => {
+        log(`Received: ${event.data}`, 'received');
+      };
+
+      ws.onerror = (error) => {
+        log(`Error: ${error}`, 'error');
+        updateStatus('Error');
+      };
+
+      ws.onclose = () => {
+        log('WebSocket disconnected', 'info');
+        updateStatus('Disconnected');
+        ws = null;
+      };
+    }
+
+    function connectViewer() {
+      connect('REGISTER_VIEWER');
+    }
+
+    function connectController() {
+      connect('REGISTER_CONTROLLER');
+    }
+
+    function disconnect() {
+      if (ws) {
+        ws.close();
+        ws = null;
+      }
+    }
+
+    function sendMessage(msg) {
+      if (!ws || ws.readyState !== WebSocket.OPEN) {
+        log('Not connected', 'error');
+        return;
+      }
+
+      msg.sessionId = sessionId;
+      const msgStr = JSON.stringify(msg);
+      log(`Sending: ${msgStr}`, 'sent');
+      ws.send(msgStr);
+    }
+
+    function sendMode(direction) {
+      sendMessage({ type: 'MODE', direction });
+    }
+
+    function sendRange(direction) {
+      sendMessage({ type: 'RANGE', direction });
+    }
+
+    function sendZones() {
+      sendMessage({ type: 'ZONES' });
+    }
+
+    function sendRaw() {
+      const raw = document.getElementById('rawMessage').value;
+      try {
+        const msg = JSON.parse(raw);
+        sendMessage(msg);
+      } catch (e) {
+        log(`Invalid JSON: ${e}`, 'error');
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // ANTENNA RADAR</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/public/css/crt-transition.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/public/css/radar.css?v=<%= Date.now() %>">
+</head>
+
+<body>
+  <div class="crt-container radar-container">
+    <div class="connection-status connected" id="connection-status">
+      <div class="status-indicator"></div>
+      <span>RADAR ACTIVE</span>
+    </div>
+
+    <div class="radar-layout">
+      <!-- Left sidebar with aircraft list -->
+      <div class="aircraft-sidebar" id="aircraft-sidebar">
+        <div class="sidebar-header">
+          <h3>TARGETS</h3>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+          <div class="radar-controls">
+            <div class="control-item">
+              <label>RANGE:</label>
+              <span id="range-display">
+                <%= range %> MI
+              </span>
+            </div>
+            <div class="control-item">
+              <label>REFRESH:</label>
+              <span id="refresh-display">
+                <%= refreshRate %>s
+              </span>
+            </div>
+            <div class="control-item">
+              <label>TARGETS:</label>
+              <span id="target-count">0</span>
+            </div>
+          </div>
+          <div class="aircraft-list" id="aircraft-list">
+            <!-- Aircraft items will be populated here -->
+          </div>
+        </div>
+        <!-- Legend for small screens -->
+        <div class="sidebar-legend">
+          <span class="legend-item"><span class="icon-sample helicopter">△</span> HELI</span>
+          <span class="legend-item"><span class="icon-sample airliner">✈</span> AIR</span>
+          <span class="legend-item"><span class="icon-sample small">▴</span> SML</span>
+          <span class="legend-item"><span class="icon-sample military">★</span> MIL</span>
+        </div>
+      </div>
+
+      <!-- Main radar display -->
+      <div class="radar-main">
+        <div class="radar-header">
+          <h1>ANTENNA RADAR</h1>
+          <div class="radar-info">
+            <span>LAT: <%= centerLat.toFixed(4) %></span>
+            <span>LON: <%= centerLon.toFixed(4) %></span>
+            <span id="current-time">--:--:--</span>
+          </div>
+        </div>
+
+        <div class="radar-display-container">
+          <canvas id="radar-canvas" width="800" height="800"></canvas>
+
+          <!-- Radar overlay elements -->
+          <div class="radar-overlay">
+            <div class="compass-marks">
+              <div class="compass-mark north">360°</div>
+              <div class="compass-mark east">090°</div>
+              <div class="compass-mark south">180°</div>
+              <div class="compass-mark west">270°</div>
+            </div>
+
+            <div class="range-rings">
+              <div class="range-label r1"><span id="range-25">25%</span></div>
+              <div class="range-label r2"><span id="range-50">50%</span></div>
+              <div class="range-label r3"><span id="range-75">75%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="radar-footer">
+          <a href="/" class="button">◀ HOME</a>
+          <div class="legend">
+            <span class="legend-item"><span class="icon-sample helicopter">△</span> HELI</span>
+            <span class="legend-item"><span class="icon-sample airliner">✈</span> AIRLINER</span>
+            <span class="legend-item"><span class="icon-sample small">▴</span> SMALL</span>
+            <span class="legend-item"><span class="icon-sample military">★</span> MILITARY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration from server
+    const radarConfig = {
+      centerLat: <%= centerLat %>,
+      centerLon: <%= centerLon %>,
+      range: <%= range %>,
+      refreshRate: <%= refreshRate %>,
+      pollingRate: <%= pollingRate %>,
+      zones: <%- JSON.stringify(zones || []) %>
+    };
+  </script>
+  <script src="/public/js/radar.js"></script>
+  <script src="/public/js/crt-transition.js"></script>
+</body>
+
+</html>

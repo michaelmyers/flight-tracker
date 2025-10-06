@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Display Test - 1024x600</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: monospace;
+      background: #222;
+      color: #0f0;
+    }
+    .test-frame {
+      width: 1024px;
+      height: 600px;
+      border: 2px solid #0f0;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+    .test-frame iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .info {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #0f0;
+    }
+    .controls {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .controls button {
+      background: #000;
+      color: #0f0;
+      border: 1px solid #0f0;
+      padding: 10px 20px;
+      margin: 0 10px;
+      cursor: pointer;
+      font-family: monospace;
+    }
+    .controls button:hover {
+      background: #0f0;
+      color: #000;
+    }
+  </style>
+</head>
+<body>
+  <div class="info">
+    <h1>10.1" Display Test (1024x600)</h1>
+    <p>Native Resolution: 1024x600 | Physical Size: 10.1" diagonal | PPI: ~118</p>
+  </div>
+
+  <div class="test-frame">
+    <iframe id="appFrame" src="http://localhost:3003/radar"></iframe>
+  </div>
+
+  <div class="controls">
+    <button onclick="loadView('/radar')">Radar View</button>
+    <button onclick="loadView('/area/1')">Zone View</button>
+    <button onclick="loadView('/')">Home</button>
+    <button onclick="loadView('/controls')">Controls</button>
+    <button onclick="toggleFullscreen()">Fullscreen Test</button>
+  </div>
+
+  <script>
+    function loadView(path) {
+      document.getElementById('appFrame').src = 'http://localhost:3003' + path;
+    }
+
+    function toggleFullscreen() {
+      const frame = document.querySelector('.test-frame');
+      if (!document.fullscreenElement) {
+        frame.requestFullscreen();
+      } else {
+        document.exitFullscreen();
+      }
+    }
+  </script>
+</body>
+</html>

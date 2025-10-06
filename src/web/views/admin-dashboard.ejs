@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN DASHBOARD // FLIGHT TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .admin-dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .admin-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .admin-title {
+      color: var(--green-bright);
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .admin-subtitle {
+      color: var(--green-medium);
+      font-size: 18px;
+    }
+
+    .admin-nav {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      padding: 15px;
+      background: rgba(0, 255, 0, 0.02);
+      border: 1px solid var(--green-dark);
+    }
+
+    .nav-item {
+      color: var(--green-bright);
+      text-decoration: none;
+      padding: 10px 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      transition: all 0.3s ease;
+    }
+
+    .nav-item:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-dark);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 255, 0, 0.15);
+      border-color: var(--green-bright);
+    }
+
+    .admin-sections {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 30px;
+      margin-bottom: 30px;
+    }
+
+    .admin-section {
+      border: 2px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.03);
+      padding: 25px;
+      transition: all 0.3s ease;
+    }
+
+    .admin-section:hover {
+      background: rgba(0, 255, 0, 0.05);
+      border-color: var(--green-bright);
+      box-shadow: 0 0 20px var(--green-dark);
+    }
+
+    .section-title {
+      color: var(--green-bright);
+      font-size: 24px;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--green-medium);
+    }
+
+    .section-description {
+      color: var(--green-medium);
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .section-stats {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .stat-item {
+      flex: 1;
+      text-align: center;
+      padding: 10px;
+      background: rgba(0, 255, 0, 0.05);
+      border: 1px solid var(--green-dark);
+    }
+
+    .stat-value {
+      color: var(--green-bright);
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    .stat-label {
+      color: var(--green-medium);
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .section-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-button {
+      flex: 1;
+      padding: 12px 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+      text-decoration: none;
+      text-align: center;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .action-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+      transform: translateY(-2px);
+    }
+
+    .system-info {
+      margin-top: 40px;
+      padding: 20px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+    }
+
+    .system-title {
+      color: var(--green-bright);
+      font-size: 20px;
+      margin-bottom: 15px;
+    }
+
+    .system-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+    }
+
+    .system-stat {
+      color: var(--green-medium);
+    }
+
+    .system-stat strong {
+      color: var(--green-bright);
+    }
+
+    .back-link {
+      display: inline-block;
+      color: var(--green-medium);
+      text-decoration: none;
+      margin-top: 30px;
+      padding: 10px 20px;
+      border: 1px solid var(--green-dark);
+      transition: all 0.3s ease;
+    }
+
+    .back-link:hover {
+      color: var(--green-bright);
+      border-color: var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="admin-dashboard">
+        <div class="admin-header">
+          <h1 class="admin-title">ADMIN DASHBOARD</h1>
+          <p class="admin-subtitle">System Administration & Configuration</p>
+        </div>
+
+        <nav class="admin-nav">
+          <a href="/admin" class="nav-item active">Dashboard</a>
+          <a href="/admin/zones" class="nav-item">Zones</a>
+          <a href="/admin/alerts" class="nav-item">Alerts</a>
+          <a href="/admin/docs" class="nav-item">Documentation</a>
+          <a href="/admin/api" class="nav-item">API</a>
+        </nav>
+
+        <div class="admin-sections">
+          <!-- Zones Section -->
+          <div class="admin-section">
+            <h2 class="section-title">ZONE MANAGEMENT</h2>
+            <p class="section-description">
+              Configure geographic tracking zones with altitude limits and polygon boundaries for aircraft monitoring.
+            </p>
+
+            <div class="section-stats">
+              <div class="stat-item">
+                <div class="stat-value"><%= areas.length %></div>
+                <div class="stat-label">Total Zones</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value"><%= areas.filter(a => a.min_altitude !== null || a.max_altitude !== null).length %></div>
+                <div class="stat-label">With Limits</div>
+              </div>
+            </div>
+
+            <div class="section-actions">
+              <a href="/admin/zones" class="action-button">MANAGE ZONES</a>
+              <a href="/admin/zones#editor" class="action-button">ZONE EDITOR</a>
+            </div>
+          </div>
+
+          <!-- Alerts Section -->
+          <div class="admin-section">
+            <h2 class="section-title">ALERT SYSTEM</h2>
+            <p class="section-description">
+              Create and manage real-time notifications when aircraft enter monitored zones. Support for webhooks and WebSocket.
+            </p>
+
+            <div class="section-stats">
+              <div class="stat-item">
+                <div class="stat-value"><%= alerts.length %></div>
+                <div class="stat-label">Total Alerts</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value"><%= alerts.filter(a => a.enabled).length %></div>
+                <div class="stat-label">Active</div>
+              </div>
+            </div>
+
+            <div class="section-actions">
+              <a href="/admin/alerts" class="action-button">MANAGE ALERTS</a>
+              <a href="/admin/alerts#create" class="action-button">CREATE ALERT</a>
+            </div>
+          </div>
+
+          <!-- Documentation Section -->
+          <div class="admin-section">
+            <h2 class="section-title">DOCUMENTATION</h2>
+            <p class="section-description">
+              Access comprehensive system documentation including API references, integration guides, and deployment instructions.
+            </p>
+
+            <div class="section-stats">
+              <div class="stat-item">
+                <div class="stat-value"><%= docCount %></div>
+                <div class="stat-label">Documents</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">11</div>
+                <div class="stat-label">Sections</div>
+              </div>
+            </div>
+
+            <div class="section-actions">
+              <a href="/admin/docs" class="action-button">VIEW DOCS</a>
+              <a href="/admin/docs?doc=README.md" class="action-button">QUICK START</a>
+            </div>
+          </div>
+
+          <!-- API Documentation Section -->
+          <div class="admin-section">
+            <h2 class="section-title">API DOCUMENTATION</h2>
+            <p class="section-description">
+              Interactive API explorer with Swagger UI. Test endpoints directly and explore the complete REST API.
+            </p>
+
+            <div class="section-stats">
+              <div class="stat-item">
+                <div class="stat-value">REST</div>
+                <div class="stat-label">API Type</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value">12</div>
+                <div class="stat-label">Endpoints</div>
+              </div>
+            </div>
+
+            <div class="section-actions">
+              <a href="/admin/api" class="action-button">OPEN API EXPLORER</a>
+              <a href="/api/aircraft?current=true" class="action-button" target="_blank">TEST ENDPOINT</a>
+            </div>
+          </div>
+
+          <!-- System Status Section -->
+          <div class="admin-section">
+            <h2 class="section-title">SYSTEM STATUS</h2>
+            <p class="section-description">
+              Monitor system health, database status, and recent activity across all tracking zones and alerts.
+            </p>
+
+            <div class="section-stats">
+              <div class="stat-item">
+                <div class="stat-value" style="color: #00ff00;">ONLINE</div>
+                <div class="stat-label">Status</div>
+              </div>
+              <div class="stat-item">
+                <div class="stat-value"><%= observationCount %></div>
+                <div class="stat-label">Observations</div>
+              </div>
+            </div>
+
+            <div class="section-actions">
+              <a href="/radar" class="action-button">RADAR VIEW</a>
+              <a href="/" class="action-button">MAIN DISPLAY</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="system-info">
+          <h3 class="system-title">SYSTEM INFORMATION</h3>
+          <div class="system-stats">
+            <div class="system-stat">
+              <strong>Database:</strong> <%= dbSize %>
+            </div>
+            <div class="system-stat">
+              <strong>Uptime:</strong> <%= uptime %>
+            </div>
+            <div class="system-stat">
+              <strong>Version:</strong> 0.1.0
+            </div>
+            <div class="system-stat">
+              <strong>Environment:</strong> <%= process.env.NODE_ENV || 'development' %>
+            </div>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+          <a href="/" class="back-link">← Back to Main Display</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

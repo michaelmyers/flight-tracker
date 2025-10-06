@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ALERT MANAGEMENT // FLIGHT TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .alerts-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .alerts-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .alerts-title {
+      font-size: 32px;
+      color: var(--green-bright);
+      margin-bottom: 10px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 15px;
+    }
+
+    .nav-link {
+      color: var(--green-medium);
+      text-decoration: none;
+      font-size: 18px;
+      transition: color 0.3s ease;
+    }
+
+    .nav-link:hover {
+      color: var(--green-bright);
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border: 1px solid var(--green-dark);
+      border-bottom: none;
+      background: rgba(0, 255, 0, 0.02);
+      color: var(--green-medium);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover {
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+    }
+
+    .tab.active {
+      background: rgba(0, 255, 0, 0.1);
+      color: var(--green-bright);
+      border-color: var(--green-medium);
+    }
+
+    /* Tab Content */
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Alert List */
+    .alert-grid {
+      display: grid;
+      gap: 15px;
+    }
+
+    .alert-item {
+      padding: 15px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s ease;
+    }
+
+    .alert-item:hover {
+      background: rgba(0, 255, 0, 0.05);
+      border-color: var(--green-medium);
+    }
+
+    .alert-info {
+      flex: 1;
+    }
+
+    .alert-name {
+      font-size: 20px;
+      color: var(--green-bright);
+      margin-bottom: 5px;
+    }
+
+    .alert-zone {
+      color: var(--green-medium);
+      font-size: 16px;
+    }
+
+    .alert-stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 8px;
+    }
+
+    .alert-stat {
+      font-size: 14px;
+      color: var(--green-medium);
+    }
+
+    .alert-stat-value {
+      color: var(--green-bright);
+      font-weight: bold;
+    }
+
+    .alert-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .action-button {
+      padding: 8px 16px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+    }
+
+    .action-button.delete {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .action-button.delete:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 50px;
+      height: 24px;
+      background: rgba(0, 255, 0, 0.2);
+      border: 1px solid var(--green-dark);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch.active {
+      background: rgba(0, 255, 0, 0.4);
+      border-color: var(--green-bright);
+    }
+
+    .toggle-switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      background: var(--green-medium);
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch.active::after {
+      left: 28px;
+      background: var(--green-bright);
+    }
+
+    /* Create Alert Form */
+    .create-form {
+      padding: 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.02);
+      margin-bottom: 30px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      color: var(--green-medium);
+      font-size: 18px;
+      min-width: 100px;
+    }
+
+    .form-input, .form-select {
+      flex: 1;
+      padding: 10px;
+      background: rgba(0, 255, 0, 0.05);
+      border: 1px solid var(--green-medium);
+      color: var(--green-bright);
+      font-family: "VT323", monospace;
+      font-size: 18px;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--green-bright);
+      background: rgba(0, 255, 0, 0.08);
+    }
+
+    /* Fix dropdown option styling */
+    .form-select option {
+      background: #000;
+      color: var(--green-bright);
+      padding: 5px;
+    }
+
+    .form-select option:hover {
+      background: rgba(0, 255, 0, 0.1);
+    }
+
+    /* Subscriber Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: rgba(0, 20, 0, 0.95);
+      border: 2px solid var(--green-bright);
+      padding: 30px;
+      max-width: 600px;
+      width: 90%;
+    }
+
+    .modal-header {
+      font-size: 24px;
+      color: var(--green-bright);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--green-medium);
+    }
+
+    .subscriber-list {
+      margin-bottom: 20px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .subscriber-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      margin-bottom: 10px;
+    }
+
+    .subscriber-type {
+      color: var(--green-bright);
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .subscriber-endpoint {
+      color: var(--green-medium);
+      flex: 1;
+      font-size: 14px;
+      word-break: break-all;
+    }
+
+    /* History */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .history-table th {
+      color: var(--green-bright);
+      background: rgba(0, 255, 0, 0.05);
+    }
+
+    .history-table td {
+      color: var(--green-medium);
+    }
+
+    .history-time {
+      color: var(--green-bright);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px;
+      color: var(--green-medium);
+      font-size: 20px;
+    }
+
+    .status-message {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      padding: 15px 20px;
+      border: 2px solid var(--green-bright);
+      background: rgba(0, 0, 0, 0.9);
+      color: var(--green-bright);
+      font-size: 18px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .status-message.visible {
+      display: block;
+    }
+
+    .status-message.error {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="alerts-container">
+        <div class="alerts-header">
+          <div class="alerts-title">ALERT MANAGEMENT SYSTEM</div>
+        </div>
+
+        <nav style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; padding: 15px; background: rgba(0, 255, 0, 0.02); border: 1px solid var(--green-dark);">
+          <a href="/admin" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Dashboard</a>
+          <a href="/admin/zones" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Zones</a>
+          <a href="/admin/alerts" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-bright); background: rgba(0, 255, 0, 0.15);">Alerts</a>
+          <a href="/admin/docs" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Documentation</a>
+          <a href="/admin/api" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">API</a>
+        </nav>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('alerts')">ALERTS</div>
+          <div class="tab" onclick="switchTab('create')">CREATE NEW</div>
+          <div class="tab" onclick="switchTab('history')">HISTORY</div>
+        </div>
+
+        <!-- Alerts Tab -->
+        <div id="alerts-tab" class="tab-content active">
+          <div class="alert-grid" id="alertsList">
+            <% if (alerts && alerts.length > 0) { %>
+              <% alerts.forEach(function(alert) { %>
+                <div class="alert-item" data-alert-id="<%= alert.id %>">
+                  <div class="alert-info">
+                    <div class="alert-name"><%= alert.alert_name %></div>
+                    <div class="alert-zone">Zone: <%= alert.zone_name %></div>
+                    <div class="alert-stats">
+                      <span class="alert-stat">
+                        Subscribers: <span class="alert-stat-value"><%= alert.subscriber_count %></span>
+                      </span>
+                      <span class="alert-stat">
+                        Triggered: <span class="alert-stat-value"><%= alert.trigger_count %> times</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div class="alert-actions">
+                    <div class="toggle-switch <%= alert.enabled ? 'active' : '' %>"
+                         onclick="toggleAlert(<%= alert.id %>, <%= !alert.enabled %>)"></div>
+                    <button class="action-button" onclick="editAlert(<%= alert.id %>)">EDIT</button>
+                    <button class="action-button" onclick="manageSubscribers(<%= alert.id %>)">SUBSCRIBERS</button>
+                    <button class="action-button delete" onclick="deleteAlert(<%= alert.id %>)">DELETE</button>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="empty-state">No alerts configured yet</div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Create New Tab -->
+        <div id="create-tab" class="tab-content">
+          <div class="create-form">
+            <h3 style="color: var(--green-bright); margin-bottom: 20px;">CREATE NEW ALERT</h3>
+            <div class="form-row">
+              <label class="form-label">Alert Name:</label>
+              <input type="text" class="form-input" id="newAlertName" placeholder="Enter alert name">
+            </div>
+            <div class="form-row">
+              <label class="form-label">Zone:</label>
+              <select class="form-select" id="newAlertZone">
+                <option value="">Select a zone</option>
+                <% zones.forEach(function(zone) { %>
+                  <option value="<%= zone.id %>"><%= zone.name %></option>
+                <% }); %>
+              </select>
+            </div>
+            <div class="form-row">
+              <button class="action-button" style="margin-left: auto; padding: 12px 30px;"
+                      onclick="createAlert()">CREATE ALERT</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content">
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>TIME</th>
+                <th>ALERT</th>
+                <th>AIRCRAFT</th>
+                <th>ZONE</th>
+                <th>DELIVERED</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable">
+              <!-- Will be populated via JavaScript -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Subscriber Modal -->
+      <div class="modal" id="subscriberModal">
+        <div class="modal-content">
+          <div class="modal-header">MANAGE SUBSCRIBERS</div>
+          <div class="subscriber-list" id="subscriberList">
+            <!-- Will be populated when opened -->
+          </div>
+          <h4 style="color: var(--green-bright); margin: 20px 0 10px;">ADD NEW SUBSCRIBER</h4>
+          <div class="form-row">
+            <select class="form-select" id="subscriberType" style="width: 150px;">
+              <option value="webhook">Webhook</option>
+              <option value="email">Email</option>
+              <option value="websocket">WebSocket</option>
+            </select>
+            <input type="text" class="form-input" id="subscriberEndpoint"
+                   placeholder="Enter webhook URL, email, or session ID">
+          </div>
+          <div class="form-row" style="justify-content: flex-end; gap: 10px;">
+            <button class="action-button" onclick="addSubscriber()">ADD</button>
+            <button class="action-button" onclick="closeModal()">CLOSE</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-message" id="statusMessage"></div>
+
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--green-dark);">
+        <a href="/admin" style="color: var(--green-medium); text-decoration: none;">← Back to Admin Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const zones = <%- JSON.stringify(zones) %>;
+    let currentAlertId = null;
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => {
+        t.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-content').forEach(c => {
+        c.classList.remove('active');
+      });
+
+      document.querySelector(`.tab:nth-child(${
+        tab === 'alerts' ? 1 : tab === 'create' ? 2 : 3
+      })`).classList.add('active');
+      document.getElementById(`${tab}-tab`).classList.add('active');
+
+      if (tab === 'history') {
+        loadHistory();
+      }
+    }
+
+    async function createAlert() {
+      const name = document.getElementById('newAlertName').value.trim();
+      const zoneId = document.getElementById('newAlertZone').value;
+
+      if (!name || !zoneId) {
+        showStatus('Please enter alert name and select a zone', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/alerts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, zone_id: parseInt(zoneId) })
+        });
+
+        if (response.ok) {
+          showStatus('Alert created successfully', 'success');
+          document.getElementById('newAlertName').value = '';
+          document.getElementById('newAlertZone').value = '';
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          const error = await response.json();
+          showStatus(error.error || 'Failed to create alert', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to create alert', 'error');
+      }
+    }
+
+    async function toggleAlert(alertId, enabled) {
+      try {
+        const response = await fetch(`/api/alerts/${alertId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ enabled })
+        });
+
+        if (response.ok) {
+          const toggle = document.querySelector(`[data-alert-id="${alertId}"] .toggle-switch`);
+          toggle.classList.toggle('active', enabled);
+          showStatus(`Alert ${enabled ? 'enabled' : 'disabled'}`, 'success');
+        } else {
+          showStatus('Failed to update alert', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to update alert', 'error');
+      }
+    }
+
+    async function deleteAlert(alertId) {
+      if (!confirm('Delete this alert? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/alerts/${alertId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          showStatus('Alert deleted successfully', 'success');
+          document.querySelector(`[data-alert-id="${alertId}"]`).remove();
+        } else {
+          showStatus('Failed to delete alert', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to delete alert', 'error');
+      }
+    }
+
+    async function manageSubscribers(alertId) {
+      currentAlertId = alertId;
+      const modal = document.getElementById('subscriberModal');
+      const list = document.getElementById('subscriberList');
+
+      try {
+        const response = await fetch(`/api/alerts/${alertId}`);
+        const data = await response.json();
+
+        list.innerHTML = '';
+        if (data.subscribers && data.subscribers.length > 0) {
+          data.subscribers.forEach(sub => {
+            list.innerHTML += `
+              <div class="subscriber-item">
+                <div>
+                  <span class="subscriber-type">${sub.type.toUpperCase()}</span>
+                  <span class="subscriber-endpoint">${sub.endpoint}</span>
+                </div>
+                <button class="action-button delete" onclick="removeSubscriber(${sub.id})">×</button>
+              </div>
+            `;
+          });
+        } else {
+          list.innerHTML = '<div style="text-align: center; color: var(--green-medium);">No subscribers yet</div>';
+        }
+
+        modal.classList.add('active');
+      } catch (error) {
+        showStatus('Failed to load subscribers', 'error');
+      }
+    }
+
+    async function addSubscriber() {
+      if (!currentAlertId) return;
+
+      const type = document.getElementById('subscriberType').value;
+      const endpoint = document.getElementById('subscriberEndpoint').value.trim();
+
+      if (!endpoint) {
+        showStatus('Please enter an endpoint', 'error');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/alerts/${currentAlertId}/subscribers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type, endpoint })
+        });
+
+        if (response.ok) {
+          showStatus('Subscriber added successfully', 'success');
+          document.getElementById('subscriberEndpoint').value = '';
+          manageSubscribers(currentAlertId); // Reload list
+        } else {
+          const error = await response.json();
+          showStatus(error.error || 'Failed to add subscriber', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to add subscriber', 'error');
+      }
+    }
+
+    async function removeSubscriber(subscriberId) {
+      try {
+        const response = await fetch(`/api/subscribers/${subscriberId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          showStatus('Subscriber removed', 'success');
+          manageSubscribers(currentAlertId); // Reload list
+        } else {
+          showStatus('Failed to remove subscriber', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to remove subscriber', 'error');
+      }
+    }
+
+    async function loadHistory() {
+      const table = document.getElementById('historyTable');
+
+      try {
+        const response = await fetch('/api/alerts');
+        const alerts = await response.json();
+
+        // For now, show a placeholder
+        table.innerHTML = `
+          <tr>
+            <td colspan="5" style="text-align: center; padding: 50px;">
+              History tracking will show recent alert triggers here
+            </td>
+          </tr>
+        `;
+      } catch (error) {
+        table.innerHTML = '<tr><td colspan="5">Failed to load history</td></tr>';
+      }
+    }
+
+    function editAlert(alertId) {
+      // Could open an edit modal or redirect to edit page
+      showStatus('Edit functionality coming soon', 'error');
+    }
+
+    function closeModal() {
+      document.getElementById('subscriberModal').classList.remove('active');
+      currentAlertId = null;
+    }
+
+    function showStatus(message, type = 'success') {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message ${type} visible`;
+
+      setTimeout(() => {
+        statusEl.classList.remove('visible');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>

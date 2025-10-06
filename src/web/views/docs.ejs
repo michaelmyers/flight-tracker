@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOCUMENTATION // FLIGHT TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .docs-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      gap: 30px;
+    }
+
+    .docs-sidebar {
+      width: 300px;
+      border-right: 2px solid var(--green-medium);
+      padding-right: 20px;
+      position: sticky;
+      top: 20px;
+      height: fit-content;
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+
+    .docs-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .docs-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .doc-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .doc-item {
+      margin-bottom: 10px;
+    }
+
+    .doc-link {
+      display: block;
+      padding: 10px 15px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      color: var(--green-bright);
+      text-decoration: none;
+      font-size: 18px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .doc-link:hover {
+      background: rgba(0, 255, 0, 0.05);
+      border-color: var(--green-medium);
+    }
+
+    .doc-link.active {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+    }
+
+    .doc-title {
+      color: var(--green-bright);
+      font-size: 28px;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--green-medium);
+    }
+
+    /* Markdown content styling */
+    .markdown-content {
+      color: var(--green-bright);
+      line-height: 1.6;
+      font-size: 18px;
+    }
+
+    .markdown-content h1 {
+      color: var(--green-bright);
+      font-size: 32px;
+      margin: 30px 0 20px 0;
+      padding-bottom: 10px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .markdown-content h2 {
+      color: var(--green-bright);
+      font-size: 26px;
+      margin: 25px 0 15px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .markdown-content h3 {
+      color: var(--green-bright);
+      font-size: 22px;
+      margin: 20px 0 10px 0;
+    }
+
+    .markdown-content h4 {
+      color: var(--green-medium);
+      font-size: 20px;
+      margin: 15px 0 10px 0;
+    }
+
+    .markdown-content p {
+      margin: 15px 0;
+    }
+
+    .markdown-content ul, .markdown-content ol {
+      margin: 15px 0;
+      padding-left: 30px;
+    }
+
+    .markdown-content li {
+      margin: 8px 0;
+    }
+
+    .markdown-content code {
+      background: rgba(0, 255, 0, 0.1);
+      border: 1px solid var(--green-dark);
+      padding: 2px 6px;
+      font-family: "VT323", monospace;
+      font-size: 18px;
+    }
+
+    .markdown-content pre {
+      background: rgba(0, 0, 0, 0.8);
+      border: 1px solid var(--green-medium);
+      padding: 15px;
+      overflow-x: auto;
+      margin: 20px 0;
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .markdown-content pre code {
+      background: none;
+      border: none;
+      padding: 0;
+      color: var(--green-bright);
+      display: block;
+    }
+
+    .markdown-content a {
+      color: var(--green-bright);
+      text-decoration: underline;
+    }
+
+    .markdown-content a:hover {
+      color: #00ff00;
+      text-shadow: 0 0 5px var(--green-bright);
+    }
+
+    .markdown-content blockquote {
+      border-left: 4px solid var(--green-medium);
+      padding-left: 20px;
+      margin: 20px 0;
+      color: var(--green-medium);
+      font-style: italic;
+    }
+
+    .markdown-content table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 20px 0;
+    }
+
+    .markdown-content th, .markdown-content td {
+      border: 1px solid var(--green-medium);
+      padding: 10px;
+      text-align: left;
+    }
+
+    .markdown-content th {
+      background: rgba(0, 255, 0, 0.1);
+      color: var(--green-bright);
+    }
+
+    .markdown-content hr {
+      border: none;
+      border-top: 1px solid var(--green-medium);
+      margin: 30px 0;
+    }
+
+    .loading {
+      text-align: center;
+      color: var(--green-medium);
+      font-size: 20px;
+      padding: 40px;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid #ff6b6b;
+      padding: 20px;
+      margin: 20px 0;
+    }
+
+    .back-link {
+      display: inline-block;
+      color: var(--green-medium);
+      text-decoration: none;
+      margin-bottom: 20px;
+    }
+
+    .back-link:hover {
+      color: var(--green-bright);
+    }
+
+    @media (max-width: 768px) {
+      .docs-container {
+        flex-direction: column;
+      }
+
+      .docs-sidebar {
+        width: 100%;
+        position: static;
+        border-right: none;
+        border-bottom: 2px solid var(--green-medium);
+        padding-right: 0;
+        padding-bottom: 20px;
+        margin-bottom: 20px;
+        max-height: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="docs-header">
+        <h1>DOCUMENTATION</h1>
+        <p style="color: var(--green-medium);">System documentation and guides</p>
+      </div>
+
+      <nav style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; padding: 15px; background: rgba(0, 255, 0, 0.02); border: 1px solid var(--green-dark);">
+        <a href="/admin" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Dashboard</a>
+        <a href="/admin/zones" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Zones</a>
+        <a href="/admin/alerts" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Alerts</a>
+        <a href="/admin/docs" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-bright); background: rgba(0, 255, 0, 0.15);">Documentation</a>
+        <a href="/admin/api" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">API</a>
+      </nav>
+
+      <div class="docs-container">
+        <aside class="docs-sidebar">
+          <h2 style="color: var(--green-bright); margin-bottom: 20px;">AVAILABLE DOCS</h2>
+          <ul class="doc-list" id="docList">
+            <% docs.forEach(function(doc) { %>
+              <li class="doc-item">
+                <a href="#" class="doc-link" data-doc="<%= doc.name %>" onclick="loadDoc('<%= doc.name %>'); return false;">
+                  <%= doc.title %>
+                </a>
+              </li>
+            <% }); %>
+          </ul>
+
+          <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--green-dark);">
+            <a href="/admin" class="back-link">← Back to Admin Dashboard</a>
+          </div>
+        </aside>
+
+        <main class="docs-content">
+          <div id="docContent" class="markdown-content">
+            <div class="loading">Select a document from the sidebar</div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    let currentDoc = null;
+
+    async function loadDoc(docName) {
+      // Update active state
+      document.querySelectorAll('.doc-link').forEach(link => {
+        link.classList.toggle('active', link.dataset.doc === docName);
+      });
+
+      // Show loading
+      const contentEl = document.getElementById('docContent');
+      contentEl.innerHTML = '<div class="loading">Loading documentation...</div>';
+
+      try {
+        const response = await fetch(`/admin/docs/${docName}`);
+        if (!response.ok) {
+          throw new Error(`Failed to load document: ${response.statusText}`);
+        }
+
+        const markdown = await response.text();
+
+        // Configure marked options
+        marked.setOptions({
+          breaks: true,
+          gfm: true,
+          headerIds: true,
+          highlight: function(code, lang) {
+            // Basic syntax highlighting by adding lang class
+            return code;
+          }
+        });
+
+        // Render markdown
+        const html = marked.parse(markdown);
+        contentEl.innerHTML = html;
+
+        // Scroll to top
+        contentEl.scrollTop = 0;
+
+        // Update current doc
+        currentDoc = docName;
+
+        // Update URL without reload
+        history.pushState({ doc: docName }, '', `/admin/docs?doc=${docName}`);
+
+      } catch (error) {
+        console.error('Error loading document:', error);
+        contentEl.innerHTML = `
+          <div class="error-message">
+            <h3>Error Loading Document</h3>
+            <p>${error.message}</p>
+            <p>Please try again or contact support if the problem persists.</p>
+          </div>
+        `;
+      }
+    }
+
+    // Load doc from URL parameter on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const docParam = urlParams.get('doc');
+
+      if (docParam) {
+        loadDoc(docParam);
+      } else {
+        // Load first doc by default
+        const firstDoc = document.querySelector('.doc-link');
+        if (firstDoc) {
+          loadDoc(firstDoc.dataset.doc);
+        }
+      }
+    });
+
+    // Handle browser back/forward
+    window.addEventListener('popstate', (event) => {
+      if (event.state && event.state.doc) {
+        loadDoc(event.state.doc);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,995 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Flight Tracker API",
+    "version": "1.0.0",
+    "description": "Real-time aircraft tracking system with zone monitoring and alert capabilities",
+    "contact": {
+      "name": "API Support"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:4040",
+      "description": "Development server"
+    },
+    {
+      "url": "https://your-domain.com",
+      "description": "Production server"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Aircraft",
+      "description": "Aircraft tracking and observations"
+    },
+    {
+      "name": "Areas",
+      "description": "Basic geographic area management"
+    },
+    {
+      "name": "Zones",
+      "description": "Enhanced zone management with altitude limits"
+    },
+    {
+      "name": "Statistics",
+      "description": "Statistical data and analytics"
+    },
+    {
+      "name": "Alerts",
+      "description": "Alert system management"
+    },
+    {
+      "name": "Subscribers",
+      "description": "Alert subscription management"
+    }
+  ],
+  "paths": {
+    "/aircraft": {
+      "get": {
+        "tags": ["Aircraft"],
+        "summary": "Get aircraft observations",
+        "description": "Returns current or historical aircraft observations",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "Time range like '1h', '24h', '7d'",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "24h"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "description": "Start time (ISO 8601 or timestamp)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "description": "End time (ISO 8601 or timestamp)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "areaId",
+            "in": "query",
+            "description": "Filter by area/zone ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Filter by aircraft type prefix",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "B73"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Aircraft"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/observations": {
+      "get": {
+        "tags": ["Aircraft"],
+        "summary": "Get historical observations",
+        "description": "Returns aircraft observations with filtering options",
+        "parameters": [
+          {
+            "name": "since",
+            "in": "query",
+            "description": "ISO 8601 date string for start time",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "until",
+            "in": "query",
+            "description": "ISO 8601 date string for end time",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "areas",
+            "in": "query",
+            "description": "Comma-separated area IDs",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "1,2,3"
+            }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "description": "Aircraft type filter",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "example": "B737"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "Maximum results",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Observation"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/areas": {
+      "get": {
+        "tags": ["Areas"],
+        "summary": "List all areas",
+        "description": "Returns all defined tracking areas (basic info only)",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Area"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Areas"],
+        "summary": "Create area from GeoJSON",
+        "description": "Create a new tracking area from GeoJSON FeatureCollection",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "description": "GeoJSON FeatureCollection"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Area(s) created successfully"
+          },
+          "400": {
+            "description": "Invalid GeoJSON format"
+          }
+        }
+      }
+    },
+    "/areas/{id}": {
+      "delete": {
+        "tags": ["Areas"],
+        "summary": "Delete area",
+        "description": "Delete a tracking area by ID",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Area deleted successfully"
+          },
+          "404": {
+            "description": "Area not found"
+          }
+        }
+      }
+    },
+    "/api/zones": {
+      "get": {
+        "tags": ["Zones"],
+        "summary": "List all zones with full details",
+        "description": "Returns all zones including altitude limits and polygon data",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Zone"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/zones/{id}": {
+      "get": {
+        "tags": ["Zones"],
+        "summary": "Get single zone",
+        "description": "Returns a specific zone by ID with all details",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Zone not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Zones"],
+        "summary": "Update zone",
+        "description": "Update zone properties including altitude limits",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Zone name"
+                  },
+                  "min_altitude": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Minimum altitude in feet"
+                  },
+                  "max_altitude": {
+                    "type": "integer",
+                    "nullable": true,
+                    "description": "Maximum altitude in feet"
+                  },
+                  "polygon": {
+                    "type": "string",
+                    "description": "GeoJSON polygon string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Zone updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Zone"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          },
+          "404": {
+            "description": "Zone not found"
+          }
+        }
+      }
+    },
+    "/api/zones/{id}/stats": {
+      "get": {
+        "tags": ["Zones"],
+        "summary": "Get zone statistics",
+        "description": "Returns current statistics for a zone",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ZoneStats"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/stats/daily": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get daily statistics",
+        "description": "Returns aircraft count statistics grouped by day",
+        "responses": {
+          "200": {
+            "description": "Successful response with daily counts"
+          }
+        }
+      }
+    },
+    "/stats/types": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get aircraft type statistics",
+        "description": "Returns statistics grouped by aircraft type",
+        "responses": {
+          "200": {
+            "description": "Successful response with type counts"
+          }
+        }
+      }
+    },
+    "/stats/areas": {
+      "get": {
+        "tags": ["Statistics"],
+        "summary": "Get area statistics",
+        "description": "Returns statistics grouped by area/zone",
+        "responses": {
+          "200": {
+            "description": "Successful response with area counts"
+          }
+        }
+      }
+    },
+    "/aircraft/live": {
+      "get": {
+        "tags": ["Aircraft"],
+        "summary": "Get live aircraft positions",
+        "description": "Returns real-time aircraft positions from PiAware feed",
+        "parameters": [
+          {
+            "name": "areaId",
+            "in": "query",
+            "description": "Filter by area ID",
+            "required": false,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Live aircraft data"
+          }
+        }
+      }
+    },
+    "/api/alerts": {
+      "get": {
+        "tags": ["Alerts"],
+        "summary": "List all alerts",
+        "description": "Returns all configured alerts",
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Alert"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Alerts"],
+        "summary": "Create alert",
+        "description": "Create a new alert configuration",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["name", "zone_id"],
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Alert name"
+                  },
+                  "zone_id": {
+                    "type": "integer",
+                    "description": "Associated zone ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Alert created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          }
+        }
+      }
+    },
+    "/api/alerts/{id}": {
+      "get": {
+        "tags": ["Alerts"],
+        "summary": "Get alert details",
+        "description": "Returns alert with subscribers and history",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AlertDetail"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alert not found"
+          }
+        }
+      },
+      "patch": {
+        "tags": ["Alerts"],
+        "summary": "Update alert",
+        "description": "Update alert properties",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Alert name"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Enable/disable alert"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Alert updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Alert"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Alert not found"
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Alerts"],
+        "summary": "Delete alert",
+        "description": "Delete an alert configuration",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Alert deleted successfully"
+          },
+          "404": {
+            "description": "Alert not found"
+          }
+        }
+      }
+    },
+    "/api/alerts/{id}/subscribers": {
+      "post": {
+        "tags": ["Subscribers"],
+        "summary": "Add subscriber",
+        "description": "Add a subscriber to an alert",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Alert ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["type", "endpoint"],
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "enum": ["webhook", "email", "websocket"],
+                    "description": "Subscriber type"
+                  },
+                  "endpoint": {
+                    "type": "string",
+                    "description": "Webhook URL, email address, or WebSocket session ID"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Subscriber added successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Subscriber"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid parameters"
+          }
+        }
+      }
+    },
+    "/api/subscribers/{id}": {
+      "delete": {
+        "tags": ["Subscribers"],
+        "summary": "Remove subscriber",
+        "description": "Remove a subscriber from an alert",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Subscriber ID",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Subscriber removed successfully"
+          },
+          "404": {
+            "description": "Subscriber not found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Area": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Area ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Area name"
+          },
+          "polygon": {
+            "type": "string",
+            "description": "JSON string of polygon coordinates"
+          }
+        }
+      },
+      "Aircraft": {
+        "type": "object",
+        "properties": {
+          "hex": {
+            "type": "string",
+            "description": "ICAO24 hex code"
+          },
+          "type": {
+            "type": "string",
+            "description": "Aircraft type code"
+          },
+          "callsign": {
+            "type": "string",
+            "description": "Flight callsign"
+          },
+          "altitude": {
+            "type": "integer",
+            "description": "Altitude in feet"
+          },
+          "speed": {
+            "type": "integer",
+            "description": "Ground speed in knots"
+          },
+          "track": {
+            "type": "integer",
+            "description": "Heading in degrees"
+          },
+          "lat": {
+            "type": "number",
+            "description": "Latitude"
+          },
+          "lon": {
+            "type": "number",
+            "description": "Longitude"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "Aircraft manufacturer"
+          },
+          "model": {
+            "type": "string",
+            "description": "Aircraft model"
+          },
+          "operator": {
+            "type": "string",
+            "description": "Airline or operator"
+          },
+          "registration": {
+            "type": "string",
+            "description": "Registration number"
+          }
+        }
+      },
+      "Observation": {
+        "type": "object",
+        "properties": {
+          "icao24": {
+            "type": "string",
+            "description": "ICAO24 hex code"
+          },
+          "area_id": {
+            "type": "integer",
+            "description": "Zone ID"
+          },
+          "enteredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Entry time"
+          },
+          "exitedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Exit time"
+          },
+          "type": {
+            "type": "string",
+            "description": "Aircraft type"
+          },
+          "altitude": {
+            "type": "integer",
+            "description": "Altitude in feet"
+          },
+          "speed": {
+            "type": "integer",
+            "description": "Speed in knots"
+          },
+          "manufacturer": {
+            "type": "string",
+            "description": "Aircraft manufacturer"
+          },
+          "model": {
+            "type": "string",
+            "description": "Aircraft model"
+          },
+          "operator": {
+            "type": "string",
+            "description": "Airline operator"
+          }
+        }
+      },
+      "Zone": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Zone ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Zone name"
+          },
+          "polygon": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            },
+            "description": "Polygon coordinates [lat, lon]"
+          },
+          "min_altitude": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Minimum altitude in feet"
+          },
+          "max_altitude": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Maximum altitude in feet"
+          }
+        }
+      },
+      "ZoneStats": {
+        "type": "object",
+        "properties": {
+          "currentAircraft": {
+            "type": "integer",
+            "description": "Number of aircraft currently in zone"
+          },
+          "todayTotal": {
+            "type": "integer",
+            "description": "Total aircraft today"
+          },
+          "avgAltitude": {
+            "type": "number",
+            "nullable": true,
+            "description": "Average altitude"
+          },
+          "lastSeen": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Timestamp of last aircraft"
+          }
+        }
+      },
+      "Alert": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Alert ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Alert name"
+          },
+          "zone_id": {
+            "type": "integer",
+            "description": "Associated zone ID"
+          },
+          "zone_name": {
+            "type": "string",
+            "description": "Zone name"
+          },
+          "enabled": {
+            "type": "integer",
+            "description": "1 if enabled, 0 if disabled"
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Creation timestamp"
+          }
+        }
+      },
+      "AlertDetail": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Alert"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "subscribers": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Subscriber"
+                }
+              },
+              "history": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AlertHistory"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "Subscriber": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Subscriber ID"
+          },
+          "alert_id": {
+            "type": "integer",
+            "description": "Associated alert ID"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["webhook", "email", "websocket"],
+            "description": "Subscriber type"
+          },
+          "endpoint": {
+            "type": "string",
+            "description": "Notification endpoint"
+          },
+          "active": {
+            "type": "integer",
+            "description": "1 if active, 0 if inactive"
+          },
+          "created_at": {
+            "type": "integer",
+            "description": "Creation timestamp"
+          }
+        }
+      },
+      "AlertHistory": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "History entry ID"
+          },
+          "aircraft_hex": {
+            "type": "string",
+            "description": "Aircraft ICAO24 hex"
+          },
+          "triggered_at": {
+            "type": "integer",
+            "description": "Trigger timestamp"
+          }
+        }
+      }
+    }
+  }
+}

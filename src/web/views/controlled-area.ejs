@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // <%= area.name.toUpperCase() %> [<%= sessionId %>]</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <link rel="stylesheet" href="/public/css/crt-transition.css">
+  <style>
+    :root {
+      --green-bright: #00ff00;
+      --green-medium: #00cc00;
+      --green-dim: #009900;
+      --green-dark: #006600;
+      --bg-primary: #000000;
+      --bg-secondary: #001100;
+    }
+
+    body {
+      background: var(--bg-primary);
+      color: var(--green-bright);
+      font-family: 'VT323', monospace;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header-section {
+      margin-bottom: 30px;
+      border-bottom: 2px solid var(--green-dark);
+      padding-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 48px;
+      margin: 0;
+      color: var(--green-bright);
+      text-shadow: 0 0 10px var(--green-bright);
+    }
+
+    .subtitle {
+      font-size: 18px;
+      color: var(--green-dim);
+      margin-top: 10px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 30px;
+      margin-top: 15px;
+      font-size: 16px;
+      color: var(--green-medium);
+    }
+
+    .content-wrapper {
+      display: flex;
+      gap: 30px;
+    }
+
+    .aircraft-grid {
+      display: grid;
+      gap: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    }
+
+    .aircraft-item {
+      background: rgba(0, 255, 0, 0.02);
+      border: 1px solid var(--green-dark);
+      padding: 15px;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    .aircraft-item:hover {
+      border-color: var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+    }
+
+    .aircraft-id {
+      font-size: 24px;
+      color: var(--green-bright);
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+
+    .aircraft-details {
+      margin: 10px 0;
+      font-size: 14px;
+    }
+
+    .detail-row {
+      display: flex;
+      gap: 15px;
+      margin: 5px 0;
+      flex-wrap: wrap;
+    }
+
+    .detail-label {
+      color: var(--green-dim);
+      min-width: 45px;
+    }
+
+    .detail-value {
+      color: var(--green-medium);
+    }
+
+    .aircraft-time {
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--green-dark);
+      font-size: 13px;
+      color: var(--green-dim);
+    }
+
+    .loading {
+      text-align: center;
+      color: var(--green-dim);
+      padding: 50px;
+    }
+
+    .no-data {
+      text-align: center;
+      color: var(--green-dim);
+      padding: 50px;
+      font-size: 18px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 10px 20px;
+      background: transparent;
+      border: 1px solid var(--green-medium);
+      color: var(--green-medium);
+      text-decoration: none;
+      transition: all 0.3s ease;
+      font-size: 16px;
+    }
+
+    .button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+      color: var(--green-bright);
+      box-shadow: 0 0 10px rgba(0, 255, 0, 0.3);
+    }
+
+    /* External control status indicator */
+    .system-status {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 20, 0, 0.9);
+      border: 1px solid #00ff00;
+      padding: 5px 10px;
+      font-family: "VT323", monospace;
+      font-size: 16px;
+      color: #00ff00;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .system-status .status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .system-status .status-separator {
+      color: #00ff00;
+      opacity: 0.5;
+    }
+
+    .system-status .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: #00ff00;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .system-status .status-indicator.warning {
+      background: #ffff00;
+    }
+
+    .system-status .status-indicator.error {
+      background: #ff0000;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .nav-buttons.controlled {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <!-- System status bar for external control (bottom-right) -->
+    <div class="system-status">
+      <div class="status-item">
+        <div class="status-indicator" id="area-status-indicator"></div>
+        <span>LIVE</span>
+      </div>
+      <span class="status-separator">|</span>
+      <div class="status-item">
+        <span>S:<%= sessionId %></span>
+      </div>
+      <% if (hasController) { %>
+      <span class="status-separator">|</span>
+      <div class="status-item">
+        <div class="status-indicator warning" id="control-indicator"></div>
+        <span>EXT</span>
+      </div>
+      <% } %>
+      <span class="status-separator">|</span>
+      <div class="status-item" id="ws-status">
+        <div class="status-indicator" id="ws-indicator"></div>
+        <span>WS</span>
+      </div>
+    </div>
+
+    <div class="container">
+      <!-- Header Section -->
+      <div class="header-section">
+        <h1><%= area.name.toUpperCase() %> <span class="header-info">ID: <%= area.id %> | S: <%= sessionId %></span></h1>
+        <div class="status-bar">
+          <span>TIME RANGE: <span id="time-range-display"><%= timeRange %></span> <%= timeRange === 1 ? 'HOUR' : 'HOURS' %></span>
+          <span>LAST UPDATE: <span id="last-update">--:--:--</span></span>
+        </div>
+      </div>
+
+      <!-- Main Content Layout (same as aircraft-list.ejs) -->
+      <div class="content-wrapper">
+        <!-- Radar View (Left) -->
+        <div class="radar-section" style="flex: 0 0 500px;">
+          <h3 style="color: var(--green-bright); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+            RADAR VIEW
+          </h3>
+          <div class="radar-canvas-wrapper" style="position: relative;">
+            <canvas id="mini-radar-canvas" width="500" height="500" style="width: 100%; height: auto; border: 1px solid var(--green-medium); background: rgba(0, 0, 0, 0.95); cursor: crosshair;"></canvas>
+            <div class="radar-info" style="position: absolute; top: 10px; left: 10px; color: var(--green-bright); font-size: 12px; background: rgba(0, 0, 0, 0.8); padding: 5px;">
+              <div>RANGE: <span id="radar-range">5</span> MI</div>
+              <div>TARGETS: <span id="radar-targets">0</span></div>
+            </div>
+          </div>
+          <div id="radar-info" style="margin-top: 10px; color: var(--green-dim); font-size: 14px; text-align: center;">
+            <span>RANGE: <span id="radar-range">5</span> MI</span>
+            <span style="margin-left: 20px;">TARGETS: <span id="radar-target-count">0</span></span>
+          </div>
+        </div>
+
+        <!-- Aircraft List (Right) -->
+        <div style="flex: 1; min-width: 0;">
+
+          <!-- Active Aircraft Section (Flying with ADS-B data) -->
+          <% if (typeof activeAircraft !== 'undefined' && activeAircraft && activeAircraft.length > 0) { %>
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: var(--green-bright); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+                ACTIVE AIRCRAFT IN ZONE (<%= activeAircraft.length %>)
+              </h3>
+              <div id="active-aircraft-container" class="aircraft-grid">
+                <% activeAircraft.forEach(ac => { %>
+                  <div class="aircraft-item active-aircraft" data-icao24="<%= ac.icao24 %>" style="border-color: var(--green-bright); background: rgba(0, 255, 0, 0.05);">
+                    <div class="aircraft-id">
+                      <%= ac.icao24.toUpperCase() %>
+                      <% if (ac.callsign) { %>
+                        <div style="font-size: 16px; color: var(--green-medium); margin-top: 5px;">
+                          <%= ac.callsign %>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-details">
+                      <div class="detail-row">
+                        <span class="detail-label">ALT:</span>
+                        <span class="detail-value"><%= ac.altitude ? ac.altitude.toLocaleString() : '--' %> ft</span>
+                        <span class="detail-label">SPD:</span>
+                        <span class="detail-value"><%= ac.speed !== null && ac.speed !== undefined ? Math.round(ac.speed) : '--' %> kts</span>
+                        <span class="detail-label">HDG:</span>
+                        <span class="detail-value"><%= ac.track !== null && ac.track !== undefined ? Math.round(ac.track) + '°' : '--' %></span>
+                      </div>
+                      <% if (ac.manufacturer || ac.model) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">TYPE:</span>
+                          <span class="detail-value">
+                            <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                          </span>
+                        </div>
+                      <% } %>
+                      <% if (ac.operator) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">OPER:</span>
+                          <span class="detail-value"><%= ac.operator %></span>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-time">
+                      <div style="color: var(--green-medium);">ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Landed Aircraft Section (In zone but on ground) -->
+          <% if (typeof landedAircraft !== 'undefined' && landedAircraft && landedAircraft.length > 0) { %>
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: var(--green-medium); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+                LANDED AIRCRAFT IN ZONE (<%= landedAircraft.length %>)
+              </h3>
+              <div id="landed-aircraft-container" class="aircraft-grid">
+                <% landedAircraft.forEach(ac => { %>
+                  <div class="aircraft-item landed-aircraft" data-icao24="<%= ac.icao24 %>" style="opacity: 0.7;">
+                    <div class="aircraft-id">
+                      <%= ac.icao24.toUpperCase() %>
+                      <% if (ac.callsign) { %>
+                        <div style="font-size: 16px; color: var(--green-dark); margin-top: 5px;">
+                          <%= ac.callsign %>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-details">
+                      <div class="detail-row">
+                        <span class="detail-label">ALT:</span>
+                        <span class="detail-value"><%= ac.altitude !== null && ac.altitude !== undefined ? ac.altitude : 'GND' %> ft</span>
+                        <span class="detail-label">SPD:</span>
+                        <span class="detail-value"><%= ac.speed !== null && ac.speed !== undefined ? Math.round(ac.speed) : '0' %> kts</span>
+                        <span class="detail-label">STATUS:</span>
+                        <span class="detail-value" style="color: var(--green-dark);">ON GROUND</span>
+                      </div>
+                      <% if (ac.manufacturer || ac.model) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">TYPE:</span>
+                          <span class="detail-value">
+                            <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                          </span>
+                        </div>
+                      <% } %>
+                      <% if (ac.operator) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">OPER:</span>
+                          <span class="detail-value"><%= ac.operator %></span>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-time">
+                      <div style="color: var(--green-dark);">LANDED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Current Aircraft Section (for backward compatibility, hidden if new sections are shown) -->
+          <% if ((typeof activeAircraft === 'undefined' || !activeAircraft) && currentAircraft && currentAircraft.length > 0) { %>
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: var(--green-bright); margin-bottom: 15px; font-size: 24px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+                CURRENT AIRCRAFT IN ZONE
+              </h3>
+              <div id="current-aircraft-container" class="aircraft-grid">
+                <% currentAircraft.forEach(ac => { %>
+                  <div class="aircraft-item current-aircraft" data-icao24="<%= ac.icao24 %>">
+                    <div class="aircraft-id">
+                      <%= ac.icao24.toUpperCase() %>
+                      <% if (ac.callsign) { %>
+                        <div style="font-size: 16px; color: var(--green-dim); margin-top: 5px;">
+                          <%= ac.callsign %>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-details">
+                      <div class="detail-row">
+                        <span class="detail-label">ALT:</span>
+                        <span class="detail-value"><%= ac.altitude || '--' %> ft</span>
+                        <span class="detail-label">SPD:</span>
+                        <span class="detail-value"><%= ac.speed ? Math.round(ac.speed) : '--' %> kts</span>
+                        <span class="detail-label">HDG:</span>
+                        <span class="detail-value"><%= ac.track ? Math.round(ac.track) + '°' : '--' %></span>
+                      </div>
+                      <% if (ac.manufacturer || ac.model) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">TYPE:</span>
+                          <span class="detail-value">
+                            <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                          </span>
+                        </div>
+                      <% } %>
+                      <% if (ac.operator) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">OPER:</span>
+                          <span class="detail-value"><%= ac.operator %></span>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-time">
+                      <div>ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+                      <div style="color: var(--green-bright);">IN ZONE</div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- Exited Aircraft Section -->
+          <% if (recentAircraft && recentAircraft.length > 0) { %>
+            <div style="margin-bottom: 30px;">
+              <h3 style="color: var(--green-dim); margin-bottom: 15px; font-size: 20px; border-bottom: 1px solid var(--green-dark); padding-bottom: 10px;">
+                EXITED AIRCRAFT (<%= recentAircraft.length %>)
+              </h3>
+              <div id="recent-aircraft-container" class="aircraft-grid">
+                <% recentAircraft.forEach(ac => { %>
+                  <div class="aircraft-item recent-aircraft" data-icao24="<%= ac.icao24 %>" style="opacity: 0.7;">
+                    <div class="aircraft-id">
+                      <%= ac.icao24.toUpperCase() %>
+                      <% if (ac.callsign) { %>
+                        <div style="font-size: 16px; color: var(--green-dim); margin-top: 5px;">
+                          <%= ac.callsign %>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-details">
+                      <div class="detail-row">
+                        <span class="detail-label">ALT:</span>
+                        <span class="detail-value"><%= ac.altitude || '--' %> ft</span>
+                        <span class="detail-label">SPD:</span>
+                        <span class="detail-value"><%= ac.speed ? Math.round(ac.speed) : '--' %> kts</span>
+                        <span class="detail-label">HDG:</span>
+                        <span class="detail-value"><%= ac.track ? Math.round(ac.track) + '°' : '--' %></span>
+                      </div>
+                      <% if (ac.manufacturer || ac.model) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">TYPE:</span>
+                          <span class="detail-value">
+                            <%= [ac.manufacturer, ac.model].filter(Boolean).join(' ') || 'UNKNOWN' %>
+                          </span>
+                        </div>
+                      <% } %>
+                      <% if (ac.operator) { %>
+                        <div class="detail-row">
+                          <span class="detail-label">OPER:</span>
+                          <span class="detail-value"><%= ac.operator %></span>
+                        </div>
+                      <% } %>
+                    </div>
+
+                    <div class="aircraft-time">
+                      <div>ENTERED: <%= new Date(ac.enteredAt).toTimeString().split(' ')[0] %></div>
+                      <div style="color: #ff6666;">EXITED: <%= new Date(ac.exitedAt).toTimeString().split(' ')[0] %></div>
+                    </div>
+                  </div>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+
+          <!-- No Data Message -->
+          <% if ((!currentAircraft || currentAircraft.length === 0) && (!recentAircraft || recentAircraft.length === 0)) { %>
+            <div class="no-data">NO AIRCRAFT ACTIVITY IN LAST <%= timeRange %> <%= timeRange === 1 ? 'HOUR' : 'HOURS' %></div>
+          <% } %>
+
+          <div id="loading" class="loading" style="display: none;">
+            UPDATING...
+          </div>
+        </div>
+      </div>
+
+      <!-- Navigation Buttons at Bottom (hidden when controlled) -->
+      <div class="nav-buttons <%= hasController ? 'controlled' : '' %>" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--green-dark); display: flex; gap: 10px;">
+        <% if (!hasController) { %>
+          <a href="/" class="button">&lt; BACK TO ZONES</a>
+          <a href="/radar" class="button">ANTENNA RADAR</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <script src="/public/js/aircraft-tracker.js"></script>
+  <script>
+    // Set global variables for external control
+    window.areaId = <%= area.id %>;
+    window.timeRange = <%= timeRange %>;
+    window.sessionId = '<%= sessionId %>';
+    window.isControlled = <%= hasController ? 'true' : 'false' %>;
+
+    // Set local variables for mini radar
+    const areaId = window.areaId;
+    const timeRange = window.timeRange;
+    const areaPolygon = <%- JSON.stringify(JSON.parse(area.polygon)) %>;
+    const areaName = '<%= area.name %>';
+    const sessionId = window.sessionId;
+    const isControlled = window.isControlled;
+
+    initializeTracker(areaId, timeRange);
+  </script>
+  <script src="/public/js/external-control-client.js"></script>
+  <script>
+
+    // Mini Radar Implementation (same as aircraft-list.ejs)
+    class MiniRadar {
+      constructor() {
+        this.canvas = document.getElementById('mini-radar-canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.centerX = 250;
+        this.centerY = 250;
+        this.radius = 200;
+        this.aircraft = new Map();
+        this.zoneCenter = this.calculateZoneCenter();
+        this.range = this.calculateOptimalRange(); // Calculate range to fit zone
+        this.pixelsPerMile = this.radius / this.range;
+        this.selectedAircraft = null;
+        this.altitudeHistory = new Map();
+
+        this.setupEventListeners();
+        this.setupWebSocket();
+        this.draw();
+        setInterval(() => this.draw(), 1000);
+
+        // Update range display
+        document.getElementById('radar-range').textContent = this.range.toFixed(1);
+      }
+
+      setupEventListeners() {
+        this.canvas.addEventListener('click', (e) => {
+          const rect = this.canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          this.handleRadarClick(x, y);
+        });
+      }
+
+      handleRadarClick(x, y) {
+        // Find closest aircraft to click
+        let closestAircraft = null;
+        let closestDistance = 15; // Max click distance in pixels
+
+        this.aircraft.forEach((ac, hex) => {
+          const point = this.latLonToRadar(ac.lat, ac.lon);
+          const distance = Math.sqrt(Math.pow(x - point.x, 2) + Math.pow(y - point.y, 2));
+
+          if (distance < closestDistance) {
+            closestDistance = distance;
+            closestAircraft = ac;
+          }
+        });
+
+        if (closestAircraft) {
+          this.selectAircraft(closestAircraft);
+        } else {
+          this.clearSelection();
+        }
+      }
+
+      selectAircraft(aircraft) {
+        this.selectedAircraft = aircraft;
+        this.draw(); // Redraw to show floating label
+      }
+
+      clearSelection() {
+        this.selectedAircraft = null;
+        this.draw(); // Redraw to remove label
+      }
+
+      calculateZoneCenter() {
+        if (!areaPolygon || areaPolygon.length === 0) {
+          return { lat: 38.9072, lon: -77.0369 }; // Default to antenna location
+        }
+
+        let sumLat = 0, sumLon = 0;
+        areaPolygon.forEach(coord => {
+          sumLat += coord[0];
+          sumLon += coord[1];
+        });
+
+        return {
+          lat: sumLat / areaPolygon.length,
+          lon: sumLon / areaPolygon.length
+        };
+      }
+
+      calculateOptimalRange() {
+        if (!areaPolygon || areaPolygon.length === 0) {
+          return 5; // Default 5 miles
+        }
+
+        let maxDistance = 0;
+        const center = this.zoneCenter;
+
+        // Find the furthest point from center
+        areaPolygon.forEach(coord => {
+          const dist = this.getDistanceFromCenter(coord[0], coord[1]);
+          if (dist > maxDistance) {
+            maxDistance = dist;
+          }
+        });
+
+        // Add 20% padding to ensure entire zone fits
+        return Math.ceil(maxDistance * 1.2);
+      }
+
+      getDistanceFromCenter(lat, lon) {
+        const R = 3959; // Earth radius in miles
+        const dLat = (lat - this.zoneCenter.lat) * Math.PI / 180;
+        const dLon = (lon - this.zoneCenter.lon) * Math.PI / 180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                  Math.cos(this.zoneCenter.lat * Math.PI / 180) * Math.cos(lat * Math.PI / 180) *
+                  Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+      }
+
+      isPointInZone(lat, lon) {
+        if (!areaPolygon || areaPolygon.length < 3) return false;
+
+        let inside = false;
+        for (let i = 0, j = areaPolygon.length - 1; i < areaPolygon.length; j = i++) {
+          const xi = areaPolygon[i][1], yi = areaPolygon[i][0];
+          const xj = areaPolygon[j][1], yj = areaPolygon[j][0];
+          const intersect = ((yi > lat) !== (yj > lat)) &&
+                          (lon < (xj - xi) * (lat - yi) / (yj - yi) + xi);
+          if (intersect) inside = !inside;
+        }
+        return inside;
+      }
+
+      setupWebSocket() {
+        const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+        const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
+
+        ws.onopen = () => {
+          console.log('Mini radar WebSocket connected');
+          ws.send(JSON.stringify({
+            type: 'SUBSCRIBE_AIRCRAFT',
+            sessionId: sessionId
+          }));
+        };
+
+        ws.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === 'AIRCRAFT_UPDATE' && data.aircraft) {
+              this.updateAircraft(data.aircraft);
+            }
+          } catch (error) {
+            console.error('Error processing WebSocket message:', error);
+          }
+        };
+
+        ws.onerror = (error) => {
+          console.error('WebSocket error:', error);
+        };
+
+        ws.onclose = () => {
+          console.log('WebSocket disconnected, reconnecting in 3 seconds...');
+          setTimeout(() => this.setupWebSocket(), 3000);
+        };
+
+        this.ws = ws;
+      }
+
+      updateAircraft(aircraftList) {
+        // Clear and update aircraft map
+        this.aircraft.clear();
+
+        aircraftList.forEach(ac => {
+          if (ac.lat && ac.lon && ac.hex) {
+            // Check if in zone
+            const inZone = this.isPointInZone(ac.lat, ac.lon);
+
+            this.aircraft.set(ac.hex, {
+              hex: ac.hex,
+              callsign: ac.flight?.trim() || null,
+              lat: ac.lat,
+              lon: ac.lon,
+              altitude: ac.alt_baro || ac.alt_geom || null,
+              speed: ac.gs || null,
+              track: ac.track || null,
+              inZone: inZone
+            });
+          }
+        });
+
+        // Update target count
+        const targetCount = Array.from(this.aircraft.values()).filter(ac => {
+          const dist = this.getDistanceFromCenter(ac.lat, ac.lon);
+          return dist <= this.range * 1.1;
+        }).length;
+
+        document.getElementById('radar-target-count').textContent = targetCount;
+        this.draw();
+      }
+
+      latLonToRadar(lat, lon) {
+        const center = this.zoneCenter;
+
+        // Calculate distances in miles
+        const latDiff = lat - center.lat;
+        const lonDiff = lon - center.lon;
+
+        // Convert to miles (approximate)
+        const milesLat = latDiff * 69; // 1 degree latitude ≈ 69 miles
+        const milesLon = lonDiff * 69 * Math.cos(center.lat * Math.PI / 180);
+
+        // Convert to radar coordinates
+        const x = this.centerX + (milesLon * this.pixelsPerMile);
+        const y = this.centerY - (milesLat * this.pixelsPerMile);
+
+        return { x, y };
+      }
+
+      draw() {
+        // Clear canvas
+        this.ctx.clearRect(0, 0, 500, 500);
+
+        // Draw radar background
+        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.95)';
+        this.ctx.fillRect(0, 0, 500, 500);
+
+        // Draw range rings
+        this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';
+        this.ctx.lineWidth = 1;
+        for (let i = 1; i <= 4; i++) {
+          this.ctx.beginPath();
+          this.ctx.arc(this.centerX, this.centerY, (this.radius / 4) * i, 0, 2 * Math.PI);
+          this.ctx.stroke();
+        }
+
+        // Draw cross hairs
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.centerX - this.radius, this.centerY);
+        this.ctx.lineTo(this.centerX + this.radius, this.centerY);
+        this.ctx.moveTo(this.centerX, this.centerY - this.radius);
+        this.ctx.lineTo(this.centerX, this.centerY + this.radius);
+        this.ctx.stroke();
+
+        // Draw zone polygon
+        if (areaPolygon && areaPolygon.length > 2) {
+          this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+          this.ctx.lineWidth = 2;
+          this.ctx.beginPath();
+
+          areaPolygon.forEach((coord, i) => {
+            const point = this.latLonToRadar(coord[0], coord[1]);
+            if (i === 0) {
+              this.ctx.moveTo(point.x, point.y);
+            } else {
+              this.ctx.lineTo(point.x, point.y);
+            }
+          });
+
+          this.ctx.closePath();
+          this.ctx.stroke();
+
+          // Fill zone with slight transparency
+          this.ctx.fillStyle = 'rgba(0, 255, 0, 0.05)';
+          this.ctx.fill();
+        }
+
+        // Draw center point
+        this.ctx.fillStyle = '#00ff00';
+        this.ctx.beginPath();
+        this.ctx.arc(this.centerX, this.centerY, 3, 0, 2 * Math.PI);
+        this.ctx.fill();
+
+        // Draw aircraft
+        this.aircraft.forEach((ac, hex) => {
+          const point = this.latLonToRadar(ac.lat, ac.lon);
+
+          // Check if aircraft is within radar display bounds
+          const dist = Math.sqrt(Math.pow(point.x - this.centerX, 2) + Math.pow(point.y - this.centerY, 2));
+          if (dist <= this.radius) {
+            // Check if this is the selected aircraft
+            const isSelected = this.selectedAircraft && this.selectedAircraft.hex === ac.hex;
+
+            if (isSelected) {
+              // Draw highlight circle for selected aircraft
+              this.ctx.strokeStyle = '#00ff00';
+              this.ctx.lineWidth = 2;
+              this.ctx.beginPath();
+              this.ctx.arc(point.x, point.y, 15, 0, 2 * Math.PI);
+              this.ctx.stroke();
+
+              // Draw connecting line from center to selected aircraft
+              this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.3)';
+              this.ctx.lineWidth = 1;
+              this.ctx.setLineDash([5, 5]);
+              this.ctx.beginPath();
+              this.ctx.moveTo(this.centerX, this.centerY);
+              this.ctx.lineTo(point.x, point.y);
+              this.ctx.stroke();
+              this.ctx.setLineDash([]);
+            }
+
+            // Color based on selection
+            this.ctx.fillStyle = isSelected ? '#00ff00' : 'rgba(0, 255, 0, 0.7)';
+
+            // Draw aircraft icon
+            this.ctx.save();
+            this.ctx.translate(point.x, point.y);
+            this.ctx.rotate((ac.track || 0) * Math.PI / 180);
+
+            // Draw simple aircraft symbol (larger if selected)
+            const scale = isSelected ? 1.5 : 1;
+            this.ctx.beginPath();
+            this.ctx.moveTo(0, -5 * scale);
+            this.ctx.lineTo(-3 * scale, 3 * scale);
+            this.ctx.lineTo(0, 1 * scale);
+            this.ctx.lineTo(3 * scale, 3 * scale);
+            this.ctx.closePath();
+            this.ctx.fill();
+
+            this.ctx.restore();
+
+            // Draw info label for selected aircraft (floating label like main radar)
+            if (isSelected) {
+              this.drawInfoLabel(ac);
+            }
+          }
+        });
+
+        // Remove label if no aircraft selected
+        if (!this.selectedAircraft) {
+          const label = document.getElementById('mini-radar-info-label');
+          if (label) label.remove();
+        }
+      }
+
+      drawInfoLabel(aircraft) {
+        // Create or update floating info label
+        let label = document.getElementById('mini-radar-info-label');
+        if (!label) {
+          label = document.createElement('div');
+          label.id = 'mini-radar-info-label';
+          label.style.position = 'absolute';
+          label.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+          label.style.border = '1px solid #00ff00';
+          label.style.padding = '4px 8px';
+          label.style.fontSize = '13px';
+          label.style.fontFamily = 'VT323, monospace';
+          label.style.color = '#00ff00';
+          label.style.pointerEvents = 'none';
+          label.style.zIndex = '1000';
+          label.style.whiteSpace = 'nowrap';
+          label.style.boxShadow = '0 0 10px rgba(0, 255, 0, 0.3)';
+          this.canvas.parentElement.appendChild(label);
+        }
+
+        // Build label content with altitude trend
+        const altTrend = this.getAltitudeTrend(aircraft);
+        let altSymbol = '';
+        let trendClass = '';
+        if (altTrend === 'climbing') {
+          altSymbol = ' ▲';
+          trendClass = 'climbing';
+        } else if (altTrend === 'descending') {
+          altSymbol = ' ▼';
+          trendClass = 'descending';
+        }
+
+        const callsign = aircraft.callsign || aircraft.hex.toUpperCase();
+        const altitude = aircraft.altitude ? `${aircraft.altitude.toLocaleString()}ft` : '----ft';
+        const speed = aircraft.speed ? `${Math.round(aircraft.speed)}kt` : '---kt';
+
+        // Format label with proper spacing
+        label.innerHTML = `
+          <div style="display: flex; gap: 12px; align-items: center;">
+            <span style="font-weight: bold; color: #00ff00;">${callsign}</span>
+            <span style="color: ${altTrend === 'climbing' ? '#00ff00' : altTrend === 'descending' ? '#ffaa00' : '#00ff00'};">
+              ${altitude}${altSymbol}
+            </span>
+            <span>${speed}</span>
+          </div>
+        `;
+
+        // Position label near aircraft
+        const point = this.latLonToRadar(aircraft.lat, aircraft.lon);
+        const canvasRect = this.canvas.getBoundingClientRect();
+        const containerRect = this.canvas.parentElement.getBoundingClientRect();
+
+        // Calculate position relative to the canvas container
+        const offsetX = canvasRect.left - containerRect.left;
+        const offsetY = canvasRect.top - containerRect.top;
+
+        // Position label to the right and slightly above the aircraft
+        label.style.left = `${point.x + offsetX + 20}px`;
+        label.style.top = `${point.y + offsetY - 15}px`;
+
+        // Keep label within bounds
+        const labelRect = label.getBoundingClientRect();
+        const containerBounds = containerRect;
+
+        // Adjust if label goes off right edge
+        if (labelRect.right > containerBounds.right) {
+          label.style.left = `${point.x + offsetX - labelRect.width - 20}px`;
+        }
+
+        // Adjust if label goes off top
+        if (labelRect.top < containerBounds.top) {
+          label.style.top = `${point.y + offsetY + 15}px`;
+        }
+      }
+
+      getAltitudeTrend(aircraft) {
+        // Track altitude history for trend detection
+        if (!this.altitudeHistory) this.altitudeHistory = new Map();
+
+        const history = this.altitudeHistory.get(aircraft.hex);
+        const currentAlt = aircraft.altitude || 0;
+
+        if (!history || !history.length) {
+          // Initialize history
+          this.altitudeHistory.set(aircraft.hex, [{
+            altitude: currentAlt,
+            time: Date.now()
+          }]);
+          return 'level';
+        }
+
+        // Add current reading to history
+        const now = Date.now();
+        history.push({ altitude: currentAlt, time: now });
+
+        // Keep only last 5 readings
+        if (history.length > 5) {
+          history.shift();
+        }
+
+        // Need at least 2 readings to determine trend
+        if (history.length < 2) return 'level';
+
+        // Calculate rate of change over recent history
+        let totalChange = 0;
+        let samples = 0;
+
+        for (let i = 1; i < history.length; i++) {
+          const timeDiff = (history[i].time - history[i-1].time) / 1000; // seconds
+          if (timeDiff > 0) {
+            const altChange = history[i].altitude - history[i-1].altitude;
+            const ratePerMin = (altChange / timeDiff) * 60;
+            totalChange += ratePerMin;
+            samples++;
+          }
+        }
+
+        if (samples === 0) return 'level';
+
+        const avgRatePerMin = totalChange / samples;
+
+        // Thresholds: > 100 ft/min climbing, < -100 ft/min descending
+        if (avgRatePerMin > 100) return 'climbing';
+        if (avgRatePerMin < -100) return 'descending';
+        return 'level';
+      }
+    }
+
+    // Initialize mini radar when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      new MiniRadar();
+    });
+
+    // Update time display
+    function updateTime() {
+      const now = new Date();
+      const timeStr = now.toTimeString().split(' ')[0];
+      const lastUpdate = document.getElementById('last-update');
+      if (lastUpdate) lastUpdate.textContent = timeStr;
+    }
+    setInterval(updateTime, 1000);
+    updateTime();
+  </script>
+</body>
+</html>

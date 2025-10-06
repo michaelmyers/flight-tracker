@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // CONTROL PANEL [<%= sessionId %>]</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .control-panel {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .control-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .session-display {
+      font-size: 36px;
+      color: var(--green-bright);
+      margin: 10px 0;
+    }
+
+    .control-section {
+      margin-bottom: 40px;
+      padding: 20px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+    }
+
+    .control-section h3 {
+      color: var(--green-bright);
+      margin-bottom: 20px;
+      font-size: 24px;
+      border-bottom: 1px solid var(--green-dark);
+      padding-bottom: 10px;
+    }
+
+    .control-group {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .control-label {
+      font-size: 20px;
+      color: var(--green-medium);
+    }
+
+    .control-value {
+      font-size: 24px;
+      color: var(--green-bright);
+      padding: 10px 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      min-width: 200px;
+      text-align: center;
+    }
+
+    .control-buttons {
+      display: flex;
+      gap: 10px;
+    }
+
+    .control-button {
+      padding: 10px 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 20px;
+      transition: all 0.3s ease;
+    }
+
+    .control-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+      box-shadow: 0 0 10px var(--green-dark);
+    }
+
+    .control-button:active {
+      transform: scale(0.95);
+    }
+
+    .control-button.toggle {
+      min-width: 100px;
+    }
+
+    .control-button.toggle.active {
+      background: rgba(0, 255, 0, 0.2);
+      border-color: var(--green-bright);
+    }
+
+    .status-section {
+      background: rgba(0, 255, 0, 0.05);
+      border: 1px solid var(--green-medium);
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .status-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .status-label {
+      color: var(--green-medium);
+    }
+
+    .status-value {
+      color: var(--green-bright);
+      font-weight: bold;
+    }
+
+    .connection-indicator {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      background: var(--green-bright);
+      border-radius: 50%;
+      margin-left: 10px;
+      animation: pulse 2s infinite;
+    }
+
+    .connection-indicator.disconnected {
+      background: #ff0000;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0% { opacity: 1; }
+      50% { opacity: 0.5; }
+      100% { opacity: 1; }
+    }
+
+    .viewer-link {
+      display: inline-block;
+      padding: 15px 30px;
+      border: 2px solid var(--green-bright);
+      background: rgba(0, 255, 0, 0.1);
+      color: var(--green-bright);
+      text-decoration: none;
+      font-size: 20px;
+      margin: 10px;
+      transition: all 0.3s ease;
+    }
+
+    .viewer-link:hover {
+      background: rgba(0, 255, 0, 0.2);
+      box-shadow: 0 0 15px var(--green-dark);
+    }
+
+    .info-text {
+      color: var(--green-medium);
+      font-size: 16px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="control-panel">
+        <div class="control-header">
+          <h1>EXTERNAL CONTROL PANEL</h1>
+          <div class="session-display">SESSION: <%= sessionId %></div>
+          <div>
+            <span class="status-label">CONNECTION:</span>
+            <span class="status-value">ACTIVE</span>
+            <span class="connection-indicator" id="connection-indicator"></span>
+          </div>
+        </div>
+
+        <div class="status-section">
+          <h3>CURRENT STATE</h3>
+          <div class="status-item">
+            <span class="status-label">MODE:</span>
+            <span class="status-value" id="current-mode"><%= currentState.mode %></span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">RANGE:</span>
+            <span class="status-value" id="current-range"><%= currentState.range || 10 %></span>
+          </div>
+          <div class="status-item">
+            <span class="status-label">ZONES:</span>
+            <span class="status-value" id="current-zones"><%= currentState.zonesEnabled ? 'ON' : 'OFF' %></span>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <h3>MODE CONTROL</h3>
+          <div class="control-group">
+            <div class="control-label">VIEW:</div>
+            <div class="control-value" id="mode-display">RADAR</div>
+          </div>
+          <div class="control-buttons" style="justify-content: center;">
+            <button class="control-button" onclick="sendControl('MODE', 'backward')">◀ PREV</button>
+            <button class="control-button" onclick="sendControl('MODE', 'forward')">NEXT ▶</button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <h3>RANGE CONTROL</h3>
+          <div class="control-group">
+            <div class="control-label">RANGE:</div>
+            <div class="control-value" id="range-display">10 MI</div>
+          </div>
+          <div class="control-buttons" style="justify-content: center;">
+            <button class="control-button" onclick="sendControl('RANGE', 'backward')">◀ DECREASE</button>
+            <button class="control-button" onclick="sendControl('RANGE', 'forward')">INCREASE ▶</button>
+          </div>
+        </div>
+
+        <div class="control-section">
+          <h3>SELECT CONTROL</h3>
+          <div class="control-group">
+            <div class="control-label">AIRCRAFT:</div>
+            <div class="control-value" id="select-display">NONE</div>
+          </div>
+          <div class="control-buttons" style="justify-content: center;">
+            <button class="control-button" onclick="sendControl('SELECT', 'backward')">◀ PREV</button>
+            <button class="control-button" onclick="sendControl('SELECT', 'forward')">NEXT ▶</button>
+          </div>
+          <p class="info-text">Cycles through aircraft by distance from center (radar mode only)</p>
+        </div>
+
+        <div class="control-section">
+          <h3>ZONES TOGGLE</h3>
+          <div class="control-group">
+            <div class="control-label">DISPLAY ZONES:</div>
+            <button class="control-button toggle" id="zones-toggle" onclick="sendControl('ZONES')">
+              OFF
+            </button>
+          </div>
+          <p class="info-text">Only available in radar mode</p>
+        </div>
+
+        <div class="control-section">
+          <h3>VIEWER LINKS</h3>
+          <div style="text-align: center;">
+            <a href="/<%= sessionId %>/radar" target="_blank" class="viewer-link">OPEN RADAR VIEW</a>
+            <a href="/<%= sessionId %>/area" target="_blank" class="viewer-link">OPEN AREA VIEW</a>
+            <p class="info-text">Open these links in separate windows/tabs to control them</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const sessionId = '<%= sessionId %>';
+    const areas = <%- JSON.stringify(areas) %>;
+    let ws = null;
+    let currentState = {
+      mode: '<%= currentState.mode %>',
+      range: <%= currentState.range || 10 %>,
+      zonesEnabled: <%= currentState.zonesEnabled || false %>
+    };
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      ws = new WebSocket(`${protocol}//${window.location.host}`);
+
+      ws.onopen = () => {
+        console.log('WebSocket connected');
+        document.getElementById('connection-indicator').classList.remove('disconnected');
+
+        // Register as controller
+        ws.send(JSON.stringify({
+          type: 'REGISTER_CONTROLLER',
+          sessionId: sessionId
+        }));
+      };
+
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'STATE_UPDATE') {
+          updateControlDisplay(data.state);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error('WebSocket error:', error);
+      };
+
+      ws.onclose = () => {
+        console.log('WebSocket disconnected');
+        document.getElementById('connection-indicator').classList.add('disconnected');
+
+        // Reconnect after 3 seconds
+        setTimeout(connectWebSocket, 3000);
+      };
+    }
+
+    function sendControl(type, direction) {
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        const message = {
+          type: type,
+          sessionId: sessionId
+        };
+
+        if (direction) {
+          message.direction = direction;
+        }
+
+        ws.send(JSON.stringify(message));
+      }
+    }
+
+    function updateControlDisplay(state) {
+      currentState = state;
+
+      // Update mode display
+      let modeText = 'RADAR';
+      if (state.mode && state.mode.startsWith('zone_')) {
+        const zoneId = parseInt(state.mode.replace('zone_', ''));
+        const zone = areas.find(a => a.id === zoneId);
+        modeText = zone ? `ZONE: ${zone.name.toUpperCase()}` : `ZONE ${zoneId}`;
+      }
+      document.getElementById('mode-display').textContent = modeText;
+      document.getElementById('current-mode').textContent = state.mode;
+
+      // Update range display
+      const isRadar = state.mode === 'radar';
+      const rangeText = isRadar ? `${state.range} MI` : `${state.range} HR${state.range > 1 ? 'S' : ''}`;
+      document.getElementById('range-display').textContent = rangeText;
+      document.getElementById('current-range').textContent = state.range;
+
+      // Update zones toggle
+      const zonesToggle = document.getElementById('zones-toggle');
+      zonesToggle.textContent = state.zonesEnabled ? 'ON' : 'OFF';
+      zonesToggle.classList.toggle('active', state.zonesEnabled);
+      document.getElementById('current-zones').textContent = state.zonesEnabled ? 'ON' : 'OFF';
+
+      // Disable zones toggle if not in radar mode
+      zonesToggle.disabled = !isRadar;
+      if (!isRadar) {
+        zonesToggle.style.opacity = '0.5';
+      } else {
+        zonesToggle.style.opacity = '1';
+      }
+    }
+
+    // Initialize display
+    updateControlDisplay(currentState);
+
+    // Connect WebSocket
+    connectWebSocket();
+  </script>
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Radar Test</title>
+  <style>
+    body {
+      background: #000;
+      color: #0f0;
+      font-family: monospace;
+      padding: 20px;
+    }
+    .info {
+      margin: 20px 0;
+      padding: 10px;
+      border: 1px solid #0f0;
+      background: rgba(0, 255, 0, 0.05);
+    }
+    h1 { color: #0f0; }
+    a { color: #0ff; }
+    .note { color: #ff0; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>Flight Tracker - Mini Radar Zone View Test</h1>
+
+  <div class="info">
+    <h2>Testing the New Mini Radar View</h2>
+    <p>The zone/area view has been updated with a mini radar display that shows:</p>
+    <ul>
+      <li>Real-time aircraft positions in and around the zone</li>
+      <li>Zone boundary overlay on the radar</li>
+      <li>Animated radar sweep effect</li>
+      <li>Color-coded aircraft (green = in zone, yellow = nearby)</li>
+      <li>Range rings and compass indicators</li>
+    </ul>
+  </div>
+
+  <div class="info">
+    <h2>Test URLs</h2>
+    <p>Visit these pages to see the mini radar in action:</p>
+    <ul>
+      <li><a href="http://localhost:3003/test123/area" target="_blank">Controlled Area View with Mini Radar</a></li>
+      <li><a href="http://localhost:3003/" target="_blank">Home Page (select a zone)</a></li>
+      <li><a href="http://localhost:3003/area/1" target="_blank">Zone 1 View (standard)</a></li>
+    </ul>
+    <p class="note">Note: The mini radar displays live aircraft data from your PiAware feed</p>
+  </div>
+
+  <div class="info">
+    <h2>Features Implemented</h2>
+    <ul>
+      <li>✅ Mini radar canvas (500x500px) integrated into zone view</li>
+      <li>✅ WebSocket connection for real-time aircraft updates</li>
+      <li>✅ Zone polygon boundary visualization</li>
+      <li>✅ Aircraft position plotting with directional indicators</li>
+      <li>✅ Animated radar sweep effect</li>
+      <li>✅ Range rings (5 mile default range)</li>
+      <li>✅ Legend showing aircraft status colors</li>
+      <li>✅ Live target counter</li>
+    </ul>
+  </div>
+
+  <div class="info">
+    <h2>Technical Details</h2>
+    <p>The mini radar implementation includes:</p>
+    <ul>
+      <li><strong>Frontend:</strong> Canvas-based radar visualization with WebSocket client</li>
+      <li><strong>Backend:</strong> WebSocket server broadcasting aircraft data every 2 seconds</li>
+      <li><strong>Data Source:</strong> PiAware dump1090 JSON feed</li>
+      <li><strong>Update Rate:</strong> 2-second intervals for smooth tracking</li>
+    </ul>
+  </div>
+</body>
+</html>

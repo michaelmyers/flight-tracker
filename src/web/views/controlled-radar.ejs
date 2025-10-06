@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FLIGHT TRACKER // ANTENNA RADAR [<%= sessionId %>]</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/public/css/crt-transition.css?v=<%= Date.now() %>">
+  <link rel="stylesheet" href="/public/css/radar.css?v=<%= Date.now() %>">
+  <style>
+    .system-status {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      background: rgba(0, 20, 0, 0.9);
+      border: 1px solid #00ff00;
+      padding: 5px 10px;
+      font-family: "VT323", monospace;
+      font-size: 16px;
+      color: #00ff00;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .system-status .status-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .system-status .status-separator {
+      color: #00ff00;
+      opacity: 0.5;
+    }
+
+    .system-status .status-indicator {
+      width: 8px;
+      height: 8px;
+      background: #00ff00;
+      border-radius: 50%;
+      animation: pulse 2s infinite;
+    }
+
+    .system-status .status-indicator.warning {
+      background: #ffff00;
+    }
+
+    .system-status .status-indicator.error {
+      background: #ff0000;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .radar-footer.controlled .button {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container radar-container">
+    <!-- System status bar (bottom-right) -->
+    <div class="system-status">
+      <div class="status-item">
+        <div class="status-indicator" id="radar-status-indicator"></div>
+        <span>RDR</span>
+      </div>
+      <span class="status-separator">|</span>
+      <div class="status-item">
+        <span>S:<%= sessionId %></span>
+      </div>
+      <% if (hasController) { %>
+      <span class="status-separator">|</span>
+      <div class="status-item">
+        <div class="status-indicator warning" id="control-indicator"></div>
+        <span>EXT</span>
+      </div>
+      <% } %>
+      <span class="status-separator">|</span>
+      <div class="status-item" id="ws-status">
+        <div class="status-indicator" id="ws-indicator"></div>
+        <span>WS</span>
+      </div>
+    </div>
+
+    <div class="radar-layout">
+      <!-- Left sidebar with aircraft list -->
+      <div class="aircraft-sidebar" id="aircraft-sidebar">
+        <div class="sidebar-header">
+          <h3>TARGETS</h3>
+        </div>
+        <div class="sidebar-content" id="sidebar-content">
+          <div class="radar-controls">
+            <div class="control-item">
+              <label>RANGE:</label>
+              <span id="range-display"><%= range %> MI</span>
+            </div>
+            <div class="control-item">
+              <label>REFRESH:</label>
+              <span id="refresh-display"><%= refreshRate %>s</span>
+            </div>
+            <div class="control-item">
+              <label>TARGETS:</label>
+              <span id="target-count">0</span>
+            </div>
+          </div>
+          <div class="aircraft-list" id="aircraft-list">
+            <!-- Aircraft items will be populated here -->
+          </div>
+        </div>
+        <!-- Legend for small screens -->
+        <div class="sidebar-legend">
+          <span class="legend-item"><span class="icon-sample helicopter">△</span> HELI</span>
+          <span class="legend-item"><span class="icon-sample airliner">✈</span> AIR</span>
+          <span class="legend-item"><span class="icon-sample small">▴</span> SML</span>
+          <span class="legend-item"><span class="icon-sample military">★</span> MIL</span>
+        </div>
+      </div>
+
+      <!-- Main radar display -->
+      <div class="radar-main">
+        <div class="radar-header">
+          <h1>ANTENNA RADAR</h1>
+          <div class="radar-info">
+            <span>LAT: <%= centerLat.toFixed(4) %></span>
+            <span>LON: <%= centerLon.toFixed(4) %></span>
+            <span id="current-time">--:--:--</span>
+          </div>
+        </div>
+
+        <div class="radar-display-container">
+          <canvas id="radar-canvas" width="800" height="800"></canvas>
+
+          <!-- Radar overlay elements -->
+          <div class="radar-overlay">
+            <div class="compass-marks">
+              <div class="compass-mark north">360°</div>
+              <div class="compass-mark east">090°</div>
+              <div class="compass-mark south">180°</div>
+              <div class="compass-mark west">270°</div>
+            </div>
+
+            <div class="range-rings">
+              <div class="range-label r1"><span id="range-25">25%</span></div>
+              <div class="range-label r2"><span id="range-50">50%</span></div>
+              <div class="range-label r3"><span id="range-75">75%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="radar-footer <%= hasController ? 'controlled' : '' %>" id="radar-footer">
+          <% if (!hasController) { %>
+            <a href="/" class="button">◀ HOME</a>
+          <% } %>
+          <div class="legend">
+            <span class="legend-item"><span class="icon-sample helicopter">△</span> HELI</span>
+            <span class="legend-item"><span class="icon-sample airliner">✈</span> AIRLINER</span>
+            <span class="legend-item"><span class="icon-sample small">▴</span> SMALL</span>
+            <span class="legend-item"><span class="icon-sample military">★</span> MILITARY</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Configuration from server
+    const radarConfig = {
+      centerLat: <%= centerLat %>,
+      centerLon: <%= centerLon %>,
+      range: <%= range %>,
+      refreshRate: <%= refreshRate %>,
+      pollingRate: <%= pollingRate %>,
+      zones: <%- JSON.stringify(zones || []) %>,
+      sessionId: '<%= sessionId %>',
+      isControlled: true
+    };
+    // Make these available globally for external control
+    window.radarConfig = radarConfig;
+    window.sessionId = '<%= sessionId %>';
+    window.isControlled = true;
+
+    // Create a single shared WebSocket connection
+    window.sharedWebSocket = null;
+    window.wsMessageHandlers = [];
+
+    function createSharedWebSocket() {
+      if (window.sharedWebSocket && window.sharedWebSocket.readyState === WebSocket.OPEN) {
+        return window.sharedWebSocket;
+      }
+
+      const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+      const ws = new WebSocket(`${protocol}://${window.location.host}/ws`);
+
+      ws.onopen = () => {
+        console.log('Shared WebSocket connected');
+
+        // Update status indicator if present
+        const wsIndicator = document.getElementById('ws-indicator');
+        if (wsIndicator) {
+          wsIndicator.classList.remove('error');
+        }
+
+        // Notify all handlers
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onOpen) handler.onOpen(ws);
+        });
+      };
+
+      ws.onmessage = (event) => {
+        // Pass message to all registered handlers
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onMessage) handler.onMessage(event);
+        });
+      };
+
+      ws.onerror = (error) => {
+        console.error('Shared WebSocket error:', error);
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onError) handler.onError(error);
+        });
+      };
+
+      ws.onclose = () => {
+        console.log('Shared WebSocket closed');
+
+        // Update status indicator if present
+        const wsIndicator = document.getElementById('ws-indicator');
+        if (wsIndicator) {
+          wsIndicator.classList.add('error');
+        }
+
+        window.wsMessageHandlers.forEach(handler => {
+          if (handler.onClose) handler.onClose();
+        });
+
+        // Attempt to reconnect after 3 seconds
+        setTimeout(() => {
+          window.sharedWebSocket = createSharedWebSocket();
+        }, 3000);
+      };
+
+      window.sharedWebSocket = ws;
+      return ws;
+    }
+
+    // Create the shared WebSocket
+    createSharedWebSocket();
+  </script>
+  <script src="/public/js/radar.js"></script>
+  <script src="/public/js/external-control-client.js"></script>
+  <script src="/public/js/crt-transition.js"></script>
+</body>
+</html>

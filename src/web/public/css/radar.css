@@ -1,0 +1,994 @@
+.radar-container {
+  padding: 10px;
+}
+
+.radar-layout {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 40px);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* Sidebar Styles */
+.aircraft-sidebar {
+  width: 33%; /* 1/3 of screen width */
+  min-width: 280px; /* Minimum width for readability */
+  max-width: 450px; /* Maximum width on large screens */
+  background: var(--bg-dark);
+  border: 2px solid var(--green-dark);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s ease;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(0, 255, 0, 0.05);
+}
+
+/* Legend in sidebar for small screens */
+@media (max-width: 1200px) {
+  /* Hide main footer legend on small screens */
+  .radar-main .radar-footer .legend {
+    display: none !important;
+  }
+
+  /* Show sidebar legend as sticky footer */
+  .sidebar-legend {
+    display: flex;
+    position: sticky;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: clamp(4px, 0.6vh, 10px) clamp(6px, 1vw, 12px);
+    background: var(--bg-dark);
+    border-top: 2px solid var(--green-dark);
+    font-size: clamp(9px, 1.2vh, 12px);
+    gap: clamp(6px, 1.2vw, 12px);
+    justify-content: space-around;
+    flex-wrap: wrap;
+    z-index: 10;
+    margin-top: auto;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar-legend .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    color: var(--green-dim);
+    font-size: clamp(9px, 1.2vh, 11px);
+  }
+
+  .sidebar-legend .icon-sample {
+    font-size: clamp(12px, 1.5vh, 14px);
+    color: var(--green-primary);
+    text-shadow: 0 0 3px var(--green-primary);
+  }
+
+  .sidebar-legend .icon-sample.military {
+    color: #ff6666;
+    text-shadow: 0 0 3px #ff6666;
+  }
+}
+
+/* Hide sidebar legend on large screens */
+@media (min-width: 1201px) {
+  .sidebar-legend {
+    display: none;
+  }
+}
+
+/* Extra small screens - maximum compression */
+@media (max-height: 650px) {
+  .radar-controls {
+    margin-bottom: 2px !important;
+    padding-bottom: 2px !important;
+    gap: 6px !important;
+  }
+
+  .control-item {
+    font-size: 9px !important;
+  }
+
+  .control-item label {
+    font-size: 8px !important;
+  }
+
+  .control-item span {
+    font-size: 9px !important;
+  }
+
+  .aircraft-item-sidebar {
+    padding: 3px 4px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .aircraft-item-sidebar .aircraft-id {
+    font-size: 11px !important;
+    margin-bottom: 1px !important;
+    padding-bottom: 1px !important;
+  }
+
+  .aircraft-item-sidebar .aircraft-info {
+    font-size: 9px !important;
+    margin-bottom: 1px !important;
+  }
+
+  .aircraft-item-sidebar .aircraft-metadata {
+    font-size: 9px !important;
+    margin-top: 1px !important;
+    padding-top: 1px !important;
+  }
+
+  .aircraft-item-sidebar .metadata-row {
+    margin: 0 !important;
+    line-height: 1.1 !important;
+  }
+}
+
+/* Small screens - progressive responsive design */
+@media (max-width: 1200px) {
+  .crt-container.radar-container {
+    padding: min(10px, 1vw);
+  }
+
+  .radar-layout {
+    gap: min(10px, 1vw);
+    height: calc(100vh - 2 * min(10px, 1vw));
+    display: flex;
+    flex-direction: row;
+  }
+
+  .aircraft-sidebar {
+    width: clamp(250px, 33%, 400px); /* 1/3 of screen width */
+    font-size: clamp(11px, 1.2vw, 14px);
+    border-width: 1px;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative; /* For legend positioning */
+  }
+
+  .aircraft-sidebar .sidebar-header {
+    padding: clamp(4px, 0.8vh, 10px) clamp(6px, 1vw, 12px);
+  }
+
+  .aircraft-sidebar .sidebar-header h3 {
+    font-size: clamp(14px, 2vh, 20px);
+    letter-spacing: 0.5px;
+    margin: 0;
+  }
+
+  .aircraft-sidebar .sidebar-content {
+    padding: clamp(4px, 0.8vh, 12px);
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    /* Remove padding-bottom since legend is now sticky */
+  }
+
+  .control-item {
+    font-size: clamp(9px, 1.1vh, 13px);
+    padding: 0;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    white-space: nowrap;
+  }
+
+  .control-item label {
+    color: var(--green-dim);
+    opacity: 0.8;
+    font-size: clamp(8px, 1vh, 11px);
+  }
+
+  .control-item span {
+    color: var(--green-bright);
+    font-weight: bold;
+    font-size: clamp(9px, 1.1vh, 12px);
+  }
+
+  .radar-controls {
+    margin-bottom: clamp(3px, 0.5vh, 10px);
+    padding-bottom: clamp(3px, 0.5vh, 10px);
+    border-bottom: 1px solid var(--green-dark);
+    display: flex;
+    flex-wrap: wrap;
+    gap: clamp(8px, 1.5vw, 20px);
+    justify-content: space-between;
+  }
+
+  /* Aircraft items responsive */
+  .aircraft-item-sidebar {
+    padding: clamp(4px, 0.8vh, 10px);
+    margin-bottom: clamp(2px, 0.3vh, 6px);
+    font-size: clamp(10px, 1.1vh, 12px);
+    min-height: auto; /* Let content determine height */
+    line-height: 1.2; /* Tighter line spacing */
+  }
+
+  /* Scrollable aircraft list */
+  .aircraft-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--green-dark) var(--bg-dark);
+    /* Add padding at bottom so last item isn't hidden behind legend */
+    padding-bottom: 30px;
+  }
+
+  /* Webkit scrollbar styling for Chrome kiosk */
+  .aircraft-list::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .aircraft-list::-webkit-scrollbar-track {
+    background: var(--bg-dark);
+  }
+
+  .aircraft-list::-webkit-scrollbar-thumb {
+    background: var(--green-dark);
+    border-radius: 3px;
+  }
+
+  .aircraft-list::-webkit-scrollbar-thumb:hover {
+    background: var(--green-primary);
+  }
+
+  .aircraft-item-sidebar .aircraft-id {
+    font-size: clamp(11px, 1.3vh, 14px);
+    padding-bottom: 2px;
+    margin-bottom: 2px;
+    border-bottom: 1px solid rgba(0, 255, 0, 0.2);
+    line-height: 1.1;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .aircraft-item-sidebar .aircraft-callsign {
+    font-size: clamp(10px, 1.1vh, 12px);
+    line-height: 1.2;
+    opacity: 0.9;
+  }
+
+  .aircraft-item-sidebar .aircraft-info {
+    font-size: clamp(9px, 1vh, 11px);
+    gap: clamp(4px, 0.5vw, 8px);
+    margin-bottom: 2px;
+    line-height: 1.2;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .aircraft-item-sidebar .aircraft-metadata {
+    font-size: clamp(9px, 1vh, 11px);
+    margin-top: 2px;
+    padding-top: 2px;
+    border-top: 1px solid rgba(0, 255, 0, 0.15);
+    line-height: 1.15;
+  }
+
+  .aircraft-item-sidebar .metadata-row {
+    padding: 0;
+    margin: 1px 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Main radar area responsive - 2/3 of width */
+  .radar-main {
+    padding: clamp(3px, 0.5vh, 8px);
+    border-width: 1px;
+    flex: 2; /* Take 2/3 of available space */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-width: 0; /* Allow shrinking */
+  }
+
+  .radar-main .radar-header {
+    margin-bottom: clamp(2px, 0.5vh, 10px);
+    padding-bottom: clamp(2px, 0.5vh, 8px);
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--green-dark);
+  }
+
+  .radar-main .radar-header h1 {
+    font-size: clamp(16px, 3vh, 28px);
+    letter-spacing: clamp(0.5px, 0.1vw, 2px);
+    margin: 0;
+  }
+
+  .radar-main .radar-info {
+    font-size: clamp(11px, 1.5vh, 16px);
+    gap: clamp(5px, 1vw, 15px);
+  }
+
+  .radar-display-container {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    padding: clamp(2px, 0.5vh, 10px);
+  }
+
+  #radar-canvas {
+    width: min(calc(100% - 20px), calc(100vh - 150px)); /* More space for header/footer */
+    height: min(calc(100% - 20px), calc(100vh - 150px));
+    max-width: 100%;
+    max-height: 100%;
+    aspect-ratio: 1 / 1;
+  }
+
+  .radar-main .radar-footer {
+    padding: clamp(2px, 0.3vh, 6px) 0;
+    margin-top: clamp(2px, 0.3vh, 6px);
+    border-top: 1px solid var(--green-dark);
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: clamp(5px, 1vw, 15px);
+    min-height: 0; /* Allow shrinking */
+  }
+
+  .radar-footer .button {
+    padding: clamp(3px, 0.5vh, 6px) clamp(6px, 1vw, 12px);
+    font-size: clamp(11px, 1.5vh, 14px);
+  }
+
+  .legend {
+    font-size: clamp(10px, 1.5vh, 14px);
+    gap: clamp(6px, 1vw, 15px);
+  }
+
+  .legend-item {
+    font-size: clamp(10px, 1.5vh, 14px);
+  }
+
+  .icon-sample {
+    font-size: clamp(14px, 2vh, 18px);
+  }
+
+  /* Compact aircraft labels on radar */
+  .aircraft-label {
+    font-size: 10px !important;
+    padding: 2px 4px !important;
+  }
+
+  .aircraft-blip {
+    font-size: 14px !important;
+  }
+
+  /* Hide toggle button on small screens to save space */
+  .toggle-btn {
+    display: none;
+  }
+
+  /* Optimize compass marks for small display - bring them inside */
+  .compass-mark {
+    font-size: clamp(12px, 1.5vh, 16px) !important;
+    padding: 1px !important;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 2px;
+  }
+
+  .compass-mark.north {
+    top: 5px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .compass-mark.south {
+    bottom: 5px !important;
+    top: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  .compass-mark.east {
+    right: 5px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  .compass-mark.west {
+    left: 5px !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+  }
+
+  /* Optimize radar overlay for dynamic canvas size */
+  .radar-overlay {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  /* Ensure compass marks container fills the canvas */
+  .compass-marks {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Connection status responsive */
+  .connection-status {
+    font-size: clamp(10px, 1.5vh, 14px);
+    padding: clamp(2px, 0.4vh, 6px) clamp(5px, 1vw, 10px);
+    top: clamp(2px, 0.5vh, 10px);
+    right: clamp(2px, 0.5vw, 10px);
+  }
+
+  .connection-status .status-indicator {
+    width: clamp(6px, 1vh, 10px);
+    height: clamp(6px, 1vh, 10px);
+  }
+}
+
+.aircraft-sidebar.collapsed {
+  width: 60px;
+}
+
+.aircraft-sidebar.collapsed .sidebar-content {
+  display: none;
+}
+
+.sidebar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  border-bottom: 1px solid var(--green-dark);
+  background: rgba(0, 255, 0, 0.02);
+}
+
+.sidebar-header h3 {
+  margin: 0;
+  font-size: 24px;
+  letter-spacing: 2px;
+  color: var(--green-primary);
+  text-shadow: 0 0 10px var(--green-primary);
+}
+
+.toggle-btn {
+  background: transparent;
+  border: 1px solid var(--green-primary);
+  color: var(--green-primary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 5px 10px;
+  font-family: inherit;
+  transition: all 0.3s ease;
+}
+
+.toggle-btn:hover {
+  background: var(--green-primary);
+  color: var(--bg-black);
+  box-shadow: 0 0 10px var(--green-primary);
+}
+
+.aircraft-sidebar.collapsed .toggle-btn {
+  transform: rotate(180deg);
+}
+
+.sidebar-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 15px;
+}
+
+.radar-controls {
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--green-dark);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-between;
+}
+
+.control-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.control-item label {
+  color: var(--green-dim);
+  opacity: 0.9;
+  font-size: 13px;
+}
+
+.control-item span {
+  color: var(--green-bright);
+  font-weight: bold;
+  font-size: 14px;
+}
+
+.aircraft-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.aircraft-item-sidebar {
+  background: rgba(0, 255, 0, 0.02);
+  border: 1px solid var(--green-dark);
+  padding: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.aircraft-item-sidebar:hover {
+  background: rgba(0, 255, 0, 0.05);
+  border-color: var(--green-primary);
+  box-shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+}
+
+.aircraft-item-sidebar.selected {
+  background: rgba(0, 255, 0, 0.1);
+  border-color: var(--green-bright);
+}
+
+.aircraft-item-sidebar .aircraft-id {
+  font-size: 20px;
+  color: var(--green-bright);
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.aircraft-item-sidebar .aircraft-icon-sidebar {
+  font-size: clamp(14px, 1.8vh, 18px);
+  color: var(--green-bright);
+  margin: 0 clamp(2px, 0.3vw, 6px);
+  text-shadow: 0 0 5px var(--green-primary);
+  display: inline-block;
+  line-height: 1;
+}
+
+.aircraft-item-sidebar .aircraft-icon-sidebar.military {
+  color: #ff6666;
+  text-shadow: 0 0 5px #ff6666;
+}
+
+.aircraft-item-sidebar .aircraft-callsign {
+  font-size: 16px;
+  color: var(--green-primary);
+  margin-left: 10px;
+}
+
+.aircraft-item-sidebar .aircraft-info {
+  font-size: 14px;
+  color: var(--green-dim);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 5px;
+}
+
+.aircraft-item-sidebar .altitude-info {
+  font-weight: bold;
+}
+
+.aircraft-item-sidebar .altitude-info.trend-climbing {
+  color: var(--green-bright);
+}
+
+.aircraft-item-sidebar .altitude-info.trend-descending {
+  color: #ffaa00;
+}
+
+.aircraft-item-sidebar .aircraft-metadata {
+  font-size: 13px;
+  color: var(--green-dim);
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 255, 0, 0.2);
+}
+
+.aircraft-item-sidebar .metadata-row {
+  padding: 2px 0;
+  opacity: 0.9;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.aircraft-item-sidebar .metadata-row:hover {
+  opacity: 1;
+  color: var(--green-primary);
+}
+
+/* Main Radar Display */
+.radar-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-dark);
+  border: 2px solid var(--green-dark);
+  border-radius: 8px;
+  padding: 10px;
+  box-shadow: inset 0 0 40px rgba(0, 255, 0, 0.05);
+}
+
+.radar-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-left: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--green-dark);
+}
+
+.radar-header h1 {
+  font-size: 32px;
+  margin: 0;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px var(--green-primary);
+}
+
+.radar-info {
+  display: flex;
+  gap: 20px;
+  font-size: 18px;
+  color: var(--green-dim);
+}
+
+.radar-display-container {
+  position: relative;
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 500px;
+}
+
+/* Position overlay relative to canvas */
+.radar-display-container #radar-canvas {
+  position: relative;
+}
+
+#radar-canvas {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  border: 2px solid var(--green-dark);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(0, 255, 0, 0.02) 0%,
+    rgba(0, 255, 0, 0.01) 50%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
+  box-shadow: 0 0 50px rgba(0, 255, 0, 0.2), inset 0 0 50px rgba(0, 255, 0, 0.05);
+}
+
+.radar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.compass-marks {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.compass-mark {
+  position: absolute;
+  font-size: 28px;
+  font-weight: bold;
+  color: var(--green-primary);
+  text-shadow: 0 0 10px var(--green-primary);
+  font-family: "VT323", "Courier New", monospace;
+  letter-spacing: 2px;
+  line-height: 1;
+  padding: 4px;
+}
+
+.compass-mark.north {
+  top: -5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-mark.south {
+  bottom: -5%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.compass-mark.east {
+  top: 50%;
+  right: -5%;
+  transform: translateY(-50%);
+}
+
+.compass-mark.west {
+  top: 50%;
+  left: -5%;
+  transform: translateY(-50%);
+}
+
+.range-rings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.range-label {
+  position: absolute;
+  font-size: 14px;
+  color: var(--green-dim);
+  opacity: 0.7;
+}
+
+.range-label.r1 {
+  top: 50%;
+  left: 62.5%;
+  transform: translate(-50%, -50%);
+}
+
+.range-label.r2 {
+  top: 50%;
+  left: 75%;
+  transform: translate(-50%, -50%);
+}
+
+.range-label.r3 {
+  top: 50%;
+  left: 87.5%;
+  transform: translate(-50%, -50%);
+}
+
+.radar-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 10px;
+  border-top: 1px solid var(--green-dark);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.legend {
+  display: flex;
+  gap: 20px;
+  font-size: 16px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--green-dim);
+}
+
+.icon-sample {
+  font-size: 20px;
+  color: var(--green-primary);
+  text-shadow: 0 0 5px var(--green-primary);
+}
+
+/* Aircraft Icons on Radar */
+.aircraft-blip {
+  position: absolute;
+  font-size: 18px;
+  color: var(--green-bright);
+  text-shadow: 0 0 10px var(--green-primary), 0 0 20px var(--green-dark);
+  transform: translate(-50%, -50%);
+  transition: all 0.5s ease;
+  cursor: pointer;
+  z-index: 10;
+  line-height: 1;
+}
+
+.aircraft-blip:hover {
+  font-size: 20px;
+  color: var(--green-primary);
+  text-shadow: 0 0 15px var(--green-primary), 0 0 30px var(--green-dark);
+  z-index: 20;
+}
+
+.aircraft-blip.selected {
+  color: #ffff00;
+  text-shadow: 0 0 15px #ffff00, 0 0 30px #ffaa00;
+  animation: pulse 1s infinite;
+}
+
+.aircraft-blip.stale {
+  opacity: 0.4;
+  animation: fade 2s infinite;
+}
+
+.aircraft-blip.stale .aircraft-label {
+  opacity: 0.4;
+}
+
+.aircraft-blip.military {
+  color: #ff6666;
+  text-shadow: 0 0 10px #ff6666, 0 0 20px #cc0000;
+}
+
+/* Altitude trend styling within labels */
+.aircraft-label .alt-value {
+  font-weight: bold;
+}
+
+.aircraft-label .alt-value.trend-climbing {
+  color: var(--green-bright);
+}
+
+.aircraft-label .alt-value.trend-descending {
+  color: #ffaa00;
+}
+
+/* Trend arrow positioning */
+.trend-arrow {
+  position: relative;
+  top: -2px;
+  margin-left: 1px;
+  font-size: 0.9em;
+}
+
+/* Aircraft Metadata Labels */
+.aircraft-label {
+  position: absolute;
+  font-size: 12px;
+  color: var(--green-dim);
+  text-shadow: 0 0 5px var(--green-dark);
+  transform: translate(-50%, 0);
+  transition: all 0.3s ease;
+  cursor: pointer;
+  z-index: 9;
+  white-space: nowrap;
+  font-family: "VT323", "Courier New", monospace;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 2px 6px;
+  border-radius: 2px;
+  border: 1px solid rgba(0, 255, 0, 0.3);
+  opacity: 0.8;
+  min-width: 120px;
+  display: inline-flex;
+  gap: 6px;
+  justify-content: space-between;
+}
+
+.aircraft-label .label-id {
+  min-width: 40px;
+  text-align: left;
+}
+
+.aircraft-label .label-speed {
+  min-width: 35px;
+  text-align: right;
+}
+
+.aircraft-label:hover {
+  color: var(--green-bright);
+  text-shadow: 0 0 8px var(--green-primary);
+  background: rgba(0, 0, 0, 0.9);
+  border-color: var(--green-primary);
+  opacity: 1;
+  z-index: 21;
+}
+
+.aircraft-label.selected {
+  color: #ffff00;
+  text-shadow: 0 0 10px #ffff00;
+  background: rgba(0, 0, 0, 0.9);
+  border-color: #ffff00;
+  opacity: 1;
+}
+
+.aircraft-blip.military + .aircraft-label {
+  color: #ff9999;
+  border-color: rgba(255, 102, 102, 0.5);
+}
+
+.aircraft-blip.military + .aircraft-label:hover,
+.aircraft-blip.military + .aircraft-label.selected {
+  color: #ff6666;
+  border-color: #ff6666;
+}
+
+/* Mobile/tablet portrait mode only */
+@media (max-width: 768px) and (orientation: portrait) {
+  .radar-layout {
+    flex-direction: column;
+  }
+
+  .aircraft-sidebar {
+    width: 100%;
+    height: 30vh;
+    max-height: 250px;
+  }
+
+  .aircraft-sidebar.collapsed {
+    height: 60px;
+  }
+
+  .sidebar-content {
+    flex-direction: column;
+  }
+
+  .aircraft-list {
+    flex-direction: column;
+    max-height: calc(30vh - 80px);
+  }
+}
+
+/* Radar grid animation */
+@keyframes radarScan {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes fade {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.radar-grid {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border: 1px solid rgba(0, 255, 0, 0.2);
+  border-radius: 50%;
+}
+
+.radar-grid::before,
+.radar-grid::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 1px;
+  height: 100%;
+  background: rgba(0, 255, 0, 0.1);
+  transform: translateX(-50%);
+}
+
+.radar-grid::after {
+  transform: translateX(-50%) rotate(90deg);
+  transform-origin: center;
+}
