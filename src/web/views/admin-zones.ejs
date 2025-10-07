@@ -428,6 +428,19 @@
               </div>
             </div>
 
+            <!-- Display Settings -->
+            <div class="detail-section">
+              <div class="section-title">DISPLAY SETTINGS</div>
+              <div class="property-row">
+                <span class="property-label">Hide on Radar:</span>
+                <span class="property-value" id="hidden">-</span>
+                <label class="property-input" id="hiddenInputLabel" style="flex: 1; text-align: right;">
+                  <input type="checkbox" id="hiddenInput" style="width: auto; margin: 0;">
+                  <span style="margin-left: 8px; color: var(--green-medium);">Hide this zone from radar displays</span>
+                </label>
+              </div>
+            </div>
+
             <!-- Live Statistics -->
             <div class="detail-section">
               <div class="section-title">LIVE STATISTICS</div>
@@ -483,6 +496,7 @@
 
   <script>
     const zones = <%- JSON.stringify(areas) %>;
+    const selectedZoneId = <%= selectedZoneId || 'null' %>;
     let currentZone = null;
     let editMode = false;
     let statsInterval = null;
@@ -495,6 +509,10 @@
         showStatus('Zone not found', 'error');
         return;
       }
+
+      // Update URL without page reload
+      const newUrl = `/admin/zones/${zoneId}`;
+      window.history.pushState({ zoneId }, '', newUrl);
 
       // Update active state in list
       document.querySelectorAll('.zone-list-item').forEach(item => {
@@ -533,6 +551,11 @@
         currentZone.max_altitude !== null ? `${currentZone.max_altitude} ft` : 'No maximum';
       document.getElementById('maxAltInput').value =
         currentZone.max_altitude !== null ? currentZone.max_altitude : '';
+
+      // Hidden setting (SQLite stores as 0 or 1)
+      const isHidden = currentZone.hidden === 1 || currentZone.hidden === true;
+      document.getElementById('hidden').textContent = isHidden ? 'Yes' : 'No';
+      document.getElementById('hiddenInput').checked = isHidden;
 
       // Polygon info
       const polygon = JSON.parse(currentZone.polygon);
@@ -745,6 +768,7 @@
       const newName = document.getElementById('zoneNameInput').value.trim();
       const newMinAlt = document.getElementById('minAltInput').value;
       const newMaxAlt = document.getElementById('maxAltInput').value;
+      const newHidden = document.getElementById('hiddenInput').checked;
 
       if (newName && newName !== currentZone.name) {
         updates.name = newName;
@@ -766,6 +790,12 @@
         if (!isNaN(max) && max >= 0) {
           updates.max_altitude = max;
         }
+      }
+
+      // Check if hidden changed (comparing boolean to SQLite integer)
+      const currentHidden = currentZone.hidden === 1 || currentZone.hidden === true;
+      if (newHidden !== currentHidden) {
+        updates.hidden = newHidden;
       }
 
       // Add polygon if it changed
@@ -791,6 +821,8 @@
         if (response.ok) {
           const updatedZone = await response.json();
 
+          console.log('Updated zone from server:', updatedZone);
+
           // Update local data
           const index = zones.findIndex(z => z.id === currentZone.id);
           if (index !== -1) {
@@ -814,7 +846,7 @@
           showStatus('Zone updated successfully', 'success');
           pendingPolygon = null;
           cancelEdit();
-          populateDetails();
+          populateDetails(); // This will re-populate with the updated currentZone
         } else {
           const error = await response.json();
           showStatus(error.error || 'Failed to update zone', 'error');
@@ -861,6 +893,11 @@
       setTimeout(() => {
         statusEl.classList.remove('visible');
       }, 3000);
+    }
+
+    // Auto-select zone if provided in URL
+    if (selectedZoneId) {
+      selectZone(selectedZoneId);
     }
 
     // Update live indicators for all zones periodically

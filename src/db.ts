@@ -46,6 +46,7 @@ try {
   const tableInfo = db.prepare("PRAGMA table_info(areas)").all();
   const hasMinAltitude = tableInfo.some((col: any) => col.name === 'min_altitude');
   const hasMaxAltitude = tableInfo.some((col: any) => col.name === 'max_altitude');
+  const hasHidden = tableInfo.some((col: any) => col.name === 'hidden');
 
   if (!hasMinAltitude) {
     db.prepare("ALTER TABLE areas ADD COLUMN min_altitude INTEGER").run();
@@ -56,8 +57,13 @@ try {
     db.prepare("ALTER TABLE areas ADD COLUMN max_altitude INTEGER").run();
     console.log("Added max_altitude column to areas table");
   }
+
+  if (!hasHidden) {
+    db.prepare("ALTER TABLE areas ADD COLUMN hidden INTEGER DEFAULT 0").run();
+    console.log("Added hidden column to areas table");
+  }
 } catch (err) {
-  console.error("Error adding altitude columns:", err);
+  console.error("Error adding columns to areas table:", err);
 }
 
 db.exec(`
