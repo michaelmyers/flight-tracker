@@ -74,7 +74,7 @@ router.get("/:sessionId/radar", async (req: Request, res: Response) => {
     const centerLon = parseFloat(process.env.ANTENNA_LON || "-77.0369");
 
     const areas = getAreas();
-    const zonesToDisplay = zonesEnabled ? areas : [];
+    const zonesToDisplay = zonesEnabled ? areas.filter((a: any) => !a.hidden) : [];
 
     res.render("controlled-radar", {
       sessionId,
@@ -270,10 +270,10 @@ router.get("/radar", async (req: Request, res: Response) => {
     // Get zones to display from query param (e.g., displayZones=1,3,5)
     const displayZones = (req.query.displayZones as string || "").split(",").filter(Boolean).map(Number);
 
-    // Get all areas and filter to requested zones
+    // Get all areas and filter to requested zones, excluding hidden zones
     const areas = getAreas();
     const zonesToDisplay = displayZones.length > 0
-      ? areas.filter((a: any) => displayZones.includes(a.id))
+      ? areas.filter((a: any) => displayZones.includes(a.id) && !a.hidden)
       : [];
 
     res.render("radar", {
@@ -392,6 +392,11 @@ router.patch("/api/zones/:id", express.json(), async (req: Request, res: Respons
       updates.max_altitude = maxAlt;
     }
 
+    // Validate hidden field if provided
+    if (updates.hidden !== undefined) {
+      updates.hidden = updates.hidden ? 1 : 0;
+    }
+
     // Validate min < max if both provided
     if (updates.min_altitude !== null && updates.max_altitude !== null &&
         updates.min_altitude !== undefined && updates.max_altitude !== undefined &&
@@ -418,7 +423,27 @@ router.get("/admin/zones", async (_req: Request, res: Response) => {
   try {
     const areas = getAreas();
     const alerts = getAlertsWithZones();
-    res.render("admin-zones", { areas, alerts });
+    res.render("admin-zones", { areas, alerts, selectedZoneId: null });
+  } catch (error) {
+    console.error("Error rendering zone management:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Zone editor page with specific zone selected
+router.get("/admin/zones/:id", async (req: Request, res: Response) => {
+  try {
+    const zoneId = parseInt(req.params.id);
+    const areas = getAreas();
+    const alerts = getAlertsWithZones();
+
+    // Verify zone exists
+    const zone = areas.find((a: any) => a.id === zoneId);
+    if (!zone) {
+      return res.redirect("/admin/zones");
+    }
+
+    res.render("admin-zones", { areas, alerts, selectedZoneId: zoneId });
   } catch (error) {
     console.error("Error rendering zone management:", error);
     res.status(500).send("Internal Server Error");

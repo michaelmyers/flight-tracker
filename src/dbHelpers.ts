@@ -6,6 +6,7 @@ interface Area {
   polygon: string;
   min_altitude?: number | null;
   max_altitude?: number | null;
+  hidden?: number;
 }
 
 interface ObservationQuery {
@@ -30,11 +31,11 @@ interface ObservationResult {
 }
 
 export function getAreas(): Area[] {
-  return db.prepare("SELECT id, name, polygon, min_altitude, max_altitude FROM areas").all() as Area[];
+  return db.prepare("SELECT id, name, polygon, min_altitude, max_altitude, hidden FROM areas").all() as Area[];
 }
 
 export function getArea(id: number): Area | undefined {
-  return db.prepare("SELECT id, name, polygon, min_altitude, max_altitude FROM areas WHERE id = ?").get(id) as Area | undefined;
+  return db.prepare("SELECT id, name, polygon, min_altitude, max_altitude, hidden FROM areas WHERE id = ?").get(id) as Area | undefined;
 }
 
 export function updateArea(id: number, updates: Partial<Omit<Area, 'id'>>): boolean {
@@ -62,6 +63,11 @@ export function updateArea(id: number, updates: Partial<Omit<Area, 'id'>>): bool
   if (updates.max_altitude !== undefined) {
     fields.push("max_altitude = @max_altitude");
     params.max_altitude = updates.max_altitude;
+  }
+
+  if (updates.hidden !== undefined) {
+    fields.push("hidden = @hidden");
+    params.hidden = updates.hidden;
   }
 
   if (fields.length === 0) return false;
