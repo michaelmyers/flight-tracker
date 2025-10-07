@@ -12,6 +12,14 @@
   <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/css/retro-crt.css">
   <link rel="stylesheet" href="/public/css/crt-transition.css">
+  <% if (typeof sessionId !== 'undefined') { %>
+  <style>
+    /* Always hide cursor for controlled area view */
+    body, body * {
+      cursor: none !important;
+    }
+  </style>
+  <% } %>
 </head>
 
 <body>
