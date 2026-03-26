@@ -217,6 +217,7 @@
     scrollbar-color: var(--green-dark) var(--bg-dark);
     /* Add padding at bottom so last item isn't hidden behind legend */
     padding-bottom: 30px;
+    min-height: 120px;
   }
 
   /* Webkit scrollbar styling for Chrome kiosk */
@@ -291,8 +292,8 @@
   }
 
   .radar-main .radar-header {
-    margin-bottom: clamp(2px, 0.5vh, 10px);
-    padding-bottom: clamp(2px, 0.5vh, 8px);
+    margin-bottom: 0;
+    padding-bottom: clamp(2px, 0.5vh, 6px);
     flex-shrink: 0;
     border-bottom: 1px solid var(--green-dark);
   }
@@ -315,12 +316,12 @@
     justify-content: center;
     align-items: center;
     overflow: hidden;
-    padding: clamp(2px, 0.5vh, 10px);
+    padding: 0;
   }
 
   #radar-canvas {
-    width: min(calc(100% - 20px), calc(100vh - 150px)); /* More space for header/footer */
-    height: min(calc(100% - 20px), calc(100vh - 150px));
+    width: min(100%, calc(100vh - 280px));
+    height: min(100%, calc(100vh - 280px));
     max-width: 100%;
     max-height: 100%;
     aspect-ratio: 1 / 1;
@@ -430,6 +431,7 @@
     padding: clamp(2px, 0.4vh, 6px) clamp(5px, 1vw, 10px);
     top: clamp(2px, 0.5vh, 10px);
     right: clamp(2px, 0.5vw, 10px);
+    bottom: auto; /* Override base style to prevent vertical stretching */
   }
 
   .connection-status .status-indicator {
@@ -714,26 +716,26 @@
 }
 
 .compass-mark.north {
-  top: -5%;
+  top: 2%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .compass-mark.south {
-  bottom: -5%;
+  bottom: 2%;
   left: 50%;
   transform: translateX(-50%);
 }
 
 .compass-mark.east {
   top: 50%;
-  right: -5%;
+  right: 2%;
   transform: translateY(-50%);
 }
 
 .compass-mark.west {
   top: 50%;
-  left: -5%;
+  left: 2%;
   transform: translateY(-50%);
 }
 
@@ -945,6 +947,32 @@
   .aircraft-list {
     flex-direction: column;
     max-height: calc(30vh - 80px);
+    min-height: 120px;
+  }
+
+  .radar-controls {
+    margin-bottom: 2px;
+    padding-bottom: 2px;
+  }
+
+  .radar-main {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .radar-main .radar-header {
+    padding: 4px 8px;
+    margin-bottom: 0;
+  }
+
+  .radar-display-container {
+    padding: 0;
+    min-height: 0;
+  }
+
+  #radar-canvas {
+    width: min(95vw, calc(70vh - 80px));
+    height: min(95vw, calc(70vh - 80px));
   }
 }
 
