@@ -15,6 +15,7 @@ import {
   getAlertHistory,
   getAlertsWithZones
 } from "../alertHelpers.js";
+import { listSubscriptions } from "../webhookSubscriptions.js";
 import dotenv from "dotenv";
 import swaggerUi from "swagger-ui-express";
 
@@ -468,6 +469,29 @@ router.get("/admin/alerts", async (_req: Request, res: Response) => {
     res.render("alerts", { zones, alerts });
   } catch (error) {
     console.error("Error rendering alerts page:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Webhooks page
+router.get("/admin/webhooks", async (_req: Request, res: Response) => {
+  try {
+    const zones = getAreas();
+    const subscriptions = listSubscriptions();
+
+    // Enrich subscriptions with area names
+    const enrichedSubs = subscriptions.map(sub => {
+      const enriched: Record<string, unknown> = { ...sub };
+      if (sub.area_id) {
+        const area = zones.find((z: { id: number }) => z.id === sub.area_id);
+        enriched.area_name = area?.name;
+      }
+      return enriched;
+    });
+
+    res.render("webhooks", { zones, subscriptions: enrichedSubs });
+  } catch (error) {
+    console.error("Error rendering webhooks page:", error);
     res.status(500).send("Internal Server Error");
   }
 });

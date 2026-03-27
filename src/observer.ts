@@ -5,6 +5,7 @@ import { Dump1090Aircraft, AircraftInfoRow } from "./types.js";
 import dotenv from "dotenv";
 import { broadcastAircraftUpdate } from "./web/websocketServer.js";
 import { alertEngine } from "./alertEngine.js";
+import * as webhookSubscriptionManager from "./webhookSubscriptionManager.js";
 
 dotenv.config();
 
@@ -157,6 +158,11 @@ async function poll() {
           alertEngine.checkAircraftEntry(ac.hex, area_id, ac.type, ac.alt_baro).catch(err => {
             console.error(`Alert processing failed for ${ac.hex}:`, err);
           });
+
+          // Trigger webhook subscriptions for this zone entry
+          webhookSubscriptionManager.notifyEntry(ac, area_id, aircraftInfo).catch(err => {
+            console.error(`Webhook notification failed for ${ac.hex}:`, err);
+          });
         }
       }
 
@@ -201,8 +207,19 @@ async function poll() {
 
           // Clear alert tracking for this aircraft/zone
           alertEngine.clearAircraftExit(ac.hex, obs.area_id);
+
+          // Trigger webhook subscriptions for this zone exit
+          webhookSubscriptionManager.notifyExit(ac, obs.area_id, aircraftInfo).catch(err => {
+            console.error(`Webhook exit notification failed for ${ac.hex}:`, err);
+          });
         }
       }
+
+      // Check ad-hoc circular zones for webhook subscriptions
+      const aircraftInfoForAdhoc = selectAircraftInfo.get(ac.hex) as AircraftInfoRow | undefined;
+      webhookSubscriptionManager.checkAdhocZones(ac, aircraftInfoForAdhoc).catch(err => {
+        console.error(`Adhoc zone check failed for ${ac.hex}:`, err);
+      });
     }
   } catch (err) {
     console.error("PiAware poll failed:", (err as Error).message);

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WEBHOOK SUBSCRIPTIONS // FLIGHT TRACKER</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=VT323&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/public/css/retro-crt.css">
+  <style>
+    .webhooks-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .webhooks-header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid var(--green-medium);
+    }
+
+    .webhooks-title {
+      font-size: 32px;
+      color: var(--green-bright);
+      margin-bottom: 10px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .tab {
+      padding: 10px 20px;
+      border: 1px solid var(--green-dark);
+      border-bottom: none;
+      background: rgba(0, 255, 0, 0.02);
+      color: var(--green-medium);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+
+    .tab:hover {
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+    }
+
+    .tab.active {
+      background: rgba(0, 255, 0, 0.1);
+      color: var(--green-bright);
+      border-color: var(--green-medium);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Subscription List */
+    .subscription-grid {
+      display: grid;
+      gap: 15px;
+    }
+
+    .subscription-item {
+      padding: 15px;
+      border: 1px solid var(--green-dark);
+      background: rgba(0, 255, 0, 0.02);
+      transition: all 0.3s ease;
+    }
+
+    .subscription-item:hover {
+      background: rgba(0, 255, 0, 0.05);
+      border-color: var(--green-medium);
+    }
+
+    .subscription-item.disabled {
+      opacity: 0.6;
+      border-color: #ff6b6b;
+    }
+
+    .subscription-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 10px;
+    }
+
+    .subscription-url {
+      font-size: 18px;
+      color: var(--green-bright);
+      word-break: break-all;
+      flex: 1;
+    }
+
+    .subscription-status {
+      padding: 4px 10px;
+      font-size: 14px;
+      margin-left: 10px;
+    }
+
+    .subscription-status.active {
+      color: var(--green-bright);
+      border: 1px solid var(--green-bright);
+    }
+
+    .subscription-status.disabled {
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b;
+    }
+
+    .subscription-details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+
+    .detail-item {
+      font-size: 14px;
+      color: var(--green-medium);
+    }
+
+    .detail-label {
+      color: var(--green-dim);
+    }
+
+    .detail-value {
+      color: var(--green-bright);
+    }
+
+    .subscription-filters {
+      display: flex;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    .filter-tag {
+      font-size: 12px;
+      padding: 3px 8px;
+      background: rgba(0, 255, 0, 0.1);
+      border: 1px solid var(--green-medium);
+      color: var(--green-bright);
+    }
+
+    .filter-tag.include {
+      border-color: var(--green-bright);
+    }
+
+    .filter-tag.exclude {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .subscription-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid var(--green-dark);
+    }
+
+    .action-button {
+      padding: 8px 16px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.05);
+      color: var(--green-bright);
+      cursor: pointer;
+      font-family: "VT323", monospace;
+      font-size: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .action-button:hover {
+      background: rgba(0, 255, 0, 0.1);
+      border-color: var(--green-bright);
+    }
+
+    .action-button.delete {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .action-button.delete:hover {
+      background: rgba(255, 107, 107, 0.1);
+    }
+
+    .action-button.reactivate {
+      border-color: #ffd93d;
+      color: #ffd93d;
+    }
+
+    /* Create Form */
+    .create-form {
+      padding: 20px;
+      border: 1px solid var(--green-medium);
+      background: rgba(0, 255, 0, 0.02);
+      margin-bottom: 30px;
+    }
+
+    .form-section {
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .form-section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+    }
+
+    .form-section-title {
+      color: var(--green-bright);
+      font-size: 18px;
+      margin-bottom: 15px;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .form-label {
+      color: var(--green-medium);
+      font-size: 18px;
+      min-width: 140px;
+    }
+
+    .form-input, .form-select {
+      flex: 1;
+      padding: 10px;
+      background: rgba(0, 255, 0, 0.05);
+      border: 1px solid var(--green-medium);
+      color: var(--green-bright);
+      font-family: "VT323", monospace;
+      font-size: 18px;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--green-bright);
+      background: rgba(0, 255, 0, 0.08);
+    }
+
+    .form-select option {
+      background: #000;
+      color: var(--green-bright);
+    }
+
+    .form-input.small {
+      width: 120px;
+      flex: none;
+    }
+
+    .checkbox-row {
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      color: var(--green-medium);
+    }
+
+    .checkbox-label input {
+      width: 20px;
+      height: 20px;
+      accent-color: var(--green-bright);
+    }
+
+    .radio-group {
+      display: flex;
+      gap: 20px;
+    }
+
+    .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--green-medium);
+    }
+
+    .radio-label input {
+      accent-color: var(--green-bright);
+    }
+
+    .zone-config {
+      display: none;
+      padding: 15px;
+      background: rgba(0, 255, 0, 0.03);
+      border: 1px solid var(--green-dark);
+      margin-top: 10px;
+    }
+
+    .zone-config.active {
+      display: block;
+    }
+
+    /* History Tab */
+    .history-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .history-table th,
+    .history-table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid var(--green-dark);
+    }
+
+    .history-table th {
+      color: var(--green-bright);
+      background: rgba(0, 255, 0, 0.05);
+    }
+
+    .history-table td {
+      color: var(--green-medium);
+    }
+
+    .history-success {
+      color: var(--green-bright);
+    }
+
+    .history-fail {
+      color: #ff6b6b;
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+    }
+
+    .modal.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-content {
+      background: rgba(0, 20, 0, 0.95);
+      border: 2px solid var(--green-bright);
+      padding: 30px;
+      max-width: 700px;
+      width: 90%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
+      font-size: 24px;
+      color: var(--green-bright);
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid var(--green-medium);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 50px;
+      color: var(--green-medium);
+      font-size: 20px;
+    }
+
+    .status-message {
+      position: fixed;
+      top: 100px;
+      right: 20px;
+      padding: 15px 20px;
+      border: 2px solid var(--green-bright);
+      background: rgba(0, 0, 0, 0.9);
+      color: var(--green-bright);
+      font-size: 18px;
+      display: none;
+      z-index: 1000;
+    }
+
+    .status-message.visible {
+      display: block;
+    }
+
+    .status-message.error {
+      border-color: #ff6b6b;
+      color: #ff6b6b;
+    }
+
+    .failure-badge {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+      padding: 2px 8px;
+      font-size: 12px;
+      border: 1px solid #ff6b6b;
+    }
+  </style>
+</head>
+<body>
+  <div class="crt-container">
+    <div class="screen-border">
+      <div class="webhooks-container">
+        <div class="webhooks-header">
+          <div class="webhooks-title">WEBHOOK SUBSCRIPTION MANAGEMENT</div>
+        </div>
+
+        <nav style="display: flex; justify-content: center; gap: 20px; margin-bottom: 30px; padding: 15px; background: rgba(0, 255, 0, 0.02); border: 1px solid var(--green-dark);">
+          <a href="/admin" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Dashboard</a>
+          <a href="/admin/zones" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Zones</a>
+          <a href="/admin/alerts" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Alerts</a>
+          <a href="/admin/webhooks" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-bright); background: rgba(0, 255, 0, 0.15);">Webhooks</a>
+          <a href="/admin/docs" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">Documentation</a>
+          <a href="/admin/api" style="color: var(--green-bright); text-decoration: none; padding: 10px 20px; border: 1px solid var(--green-medium); background: rgba(0, 255, 0, 0.05);">API</a>
+        </nav>
+
+        <div class="tabs">
+          <div class="tab active" onclick="switchTab('subscriptions')">SUBSCRIPTIONS</div>
+          <div class="tab" onclick="switchTab('create')">CREATE NEW</div>
+          <div class="tab" onclick="switchTab('history')">DELIVERY HISTORY</div>
+        </div>
+
+        <!-- Subscriptions Tab -->
+        <div id="subscriptions-tab" class="tab-content active">
+          <div class="subscription-grid" id="subscriptionList">
+            <% if (subscriptions && subscriptions.length > 0) { %>
+              <% subscriptions.forEach(function(sub) { %>
+                <div class="subscription-item <%= sub.active ? '' : 'disabled' %>" data-sub-id="<%= sub.id %>">
+                  <div class="subscription-header">
+                    <div class="subscription-url"><%= sub.url %></div>
+                    <span class="subscription-status <%= sub.active ? 'active' : 'disabled' %>">
+                      <%= sub.active ? 'ACTIVE' : 'DISABLED' %>
+                    </span>
+                  </div>
+
+                  <div class="subscription-details">
+                    <div class="detail-item">
+                      <span class="detail-label">Zone: </span>
+                      <span class="detail-value">
+                        <% if (sub.area_id) { %>
+                          <%= sub.area_name || 'Area #' + sub.area_id %>
+                        <% } else { %>
+                          Ad-hoc (<%= sub.zone.center.lat.toFixed(4) %>, <%= sub.zone.center.lon.toFixed(4) %>) r=<%= sub.zone.radius_km %>km
+                        <% } %>
+                      </span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Events: </span>
+                      <span class="detail-value">
+                        <%= sub.notify_entry ? 'Entry' : '' %><%= sub.notify_entry && sub.notify_exit ? ' + ' : '' %><%= sub.notify_exit ? 'Exit' : '' %>
+                      </span>
+                    </div>
+                    <div class="detail-item">
+                      <span class="detail-label">Expires: </span>
+                      <span class="detail-value"><%= sub.expires_at ? new Date(sub.expires_at).toLocaleString() : 'Never' %></span>
+                    </div>
+                    <% if (sub.consecutive_failures > 0) { %>
+                      <div class="detail-item">
+                        <span class="failure-badge">FAILURES: <%= sub.consecutive_failures %>/5</span>
+                      </div>
+                    <% } %>
+                  </div>
+
+                  <% if ((sub.include_types && sub.include_types.length > 0) || (sub.exclude_types && sub.exclude_types.length > 0)) { %>
+                    <div class="subscription-filters">
+                      <% if (sub.include_types) { %>
+                        <% sub.include_types.forEach(function(t) { %>
+                          <span class="filter-tag include">+ <%= t %></span>
+                        <% }); %>
+                      <% } %>
+                      <% if (sub.exclude_types) { %>
+                        <% sub.exclude_types.forEach(function(t) { %>
+                          <span class="filter-tag exclude">- <%= t %></span>
+                        <% }); %>
+                      <% } %>
+                    </div>
+                  <% } %>
+
+                  <div class="subscription-actions">
+                    <button class="action-button" onclick="testWebhook(<%= sub.id %>)">TEST</button>
+                    <button class="action-button" onclick="viewHistory(<%= sub.id %>)">HISTORY</button>
+                    <% if (!sub.active) { %>
+                      <button class="action-button reactivate" onclick="reactivateSubscription(<%= sub.id %>)">REACTIVATE</button>
+                    <% } %>
+                    <button class="action-button delete" onclick="deleteSubscription(<%= sub.id %>)">DELETE</button>
+                  </div>
+                </div>
+              <% }); %>
+            <% } else { %>
+              <div class="empty-state">No webhook subscriptions configured yet</div>
+            <% } %>
+          </div>
+        </div>
+
+        <!-- Create New Tab -->
+        <div id="create-tab" class="tab-content">
+          <div class="create-form">
+            <div class="form-section">
+              <div class="form-section-title">WEBHOOK ENDPOINT</div>
+              <div class="form-row">
+                <label class="form-label">URL:</label>
+                <input type="url" class="form-input" id="newUrl" placeholder="https://example.com/webhook">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Secret (optional):</label>
+                <input type="text" class="form-input" id="newSecret" placeholder="HMAC secret for signature verification">
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">ZONE CONFIGURATION</div>
+              <div class="form-row">
+                <label class="form-label">Zone Type:</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="zoneType" value="area" checked onchange="toggleZoneConfig()">
+                    Existing Area
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="zoneType" value="adhoc" onchange="toggleZoneConfig()">
+                    Ad-hoc Circle
+                  </label>
+                </div>
+              </div>
+
+              <div id="areaConfig" class="zone-config active">
+                <div class="form-row">
+                  <label class="form-label">Select Area:</label>
+                  <select class="form-select" id="newAreaId">
+                    <option value="">Select an area</option>
+                    <% zones.forEach(function(zone) { %>
+                      <option value="<%= zone.id %>"><%= zone.name %></option>
+                    <% }); %>
+                  </select>
+                </div>
+              </div>
+
+              <div id="adhocConfig" class="zone-config">
+                <div class="form-row">
+                  <label class="form-label">Center Lat:</label>
+                  <input type="number" step="any" class="form-input small" id="newLat" placeholder="38.8">
+                  <label class="form-label" style="min-width: auto; margin-left: 20px;">Lon:</label>
+                  <input type="number" step="any" class="form-input small" id="newLon" placeholder="-76.87">
+                  <label class="form-label" style="min-width: auto; margin-left: 20px;">Radius (km):</label>
+                  <input type="number" step="0.1" class="form-input small" id="newRadius" placeholder="5">
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">NOTIFICATION SETTINGS</div>
+              <div class="form-row">
+                <label class="form-label">Events:</label>
+                <div class="checkbox-row">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="notifyEntry" checked> Entry
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="notifyExit" checked> Exit
+                  </label>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label">TTL:</label>
+                <div class="radio-group">
+                  <label class="radio-label">
+                    <input type="radio" name="ttl" value="" checked> Indefinite
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="ttl" value="3600"> 1 Hour
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="ttl" value="86400"> 24 Hours
+                  </label>
+                  <label class="radio-label">
+                    <input type="radio" name="ttl" value="604800"> 7 Days
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-section">
+              <div class="form-section-title">AIRCRAFT TYPE FILTERS (optional)</div>
+              <div class="form-row">
+                <label class="form-label">Include Types:</label>
+                <input type="text" class="form-input" id="includeTypes" placeholder="helicopter, H, B737 (comma-separated)">
+              </div>
+              <div class="form-row">
+                <label class="form-label">Exclude Types:</label>
+                <input type="text" class="form-input" id="excludeTypes" placeholder="C17, cargo (comma-separated)">
+              </div>
+              <div style="color: var(--green-dim); font-size: 14px; margin-top: 10px;">
+                Filter examples: "helicopter" or "H" for helicopters, "B737" for Boeing 737s, manufacturer names like "Boeing"
+              </div>
+            </div>
+
+            <div class="form-row" style="justify-content: flex-end; margin-top: 20px;">
+              <button class="action-button" style="padding: 12px 30px;" onclick="createSubscription()">
+                CREATE SUBSCRIPTION
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- History Tab -->
+        <div id="history-tab" class="tab-content">
+          <div style="margin-bottom: 20px;">
+            <select class="form-select" id="historySubFilter" onchange="loadGlobalHistory()" style="width: auto;">
+              <option value="">All Subscriptions</option>
+              <% subscriptions.forEach(function(sub) { %>
+                <option value="<%= sub.id %>">#<%= sub.id %> - <%= sub.url.substring(0, 50) %></option>
+              <% }); %>
+            </select>
+          </div>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>TIME</th>
+                <th>EVENT</th>
+                <th>AIRCRAFT</th>
+                <th>STATUS</th>
+                <th>DURATION</th>
+              </tr>
+            </thead>
+            <tbody id="historyTable">
+              <tr><td colspan="5" class="empty-state">Select a subscription or view all</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- History Modal -->
+      <div class="modal" id="historyModal">
+        <div class="modal-content">
+          <div class="modal-header">DELIVERY HISTORY</div>
+          <table class="history-table">
+            <thead>
+              <tr>
+                <th>TIME</th>
+                <th>EVENT</th>
+                <th>AIRCRAFT</th>
+                <th>STATUS</th>
+                <th>DURATION</th>
+              </tr>
+            </thead>
+            <tbody id="modalHistoryTable"></tbody>
+          </table>
+          <div style="text-align: right; margin-top: 20px;">
+            <button class="action-button" onclick="closeModal()">CLOSE</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="status-message" id="statusMessage"></div>
+
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--green-dark);">
+        <a href="/admin" style="color: var(--green-medium); text-decoration: none;">← Back to Admin Dashboard</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const zones = <%- JSON.stringify(zones) %>;
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+      const tabIndex = tab === 'subscriptions' ? 1 : tab === 'create' ? 2 : 3;
+      document.querySelector(`.tab:nth-child(${tabIndex})`).classList.add('active');
+      document.getElementById(`${tab}-tab`).classList.add('active');
+
+      if (tab === 'history') {
+        loadGlobalHistory();
+      }
+    }
+
+    function toggleZoneConfig() {
+      const isArea = document.querySelector('input[name="zoneType"]:checked').value === 'area';
+      document.getElementById('areaConfig').classList.toggle('active', isArea);
+      document.getElementById('adhocConfig').classList.toggle('active', !isArea);
+    }
+
+    function parseTypeList(input) {
+      if (!input.trim()) return null;
+      return input.split(',').map(s => s.trim()).filter(s => s.length > 0);
+    }
+
+    async function createSubscription() {
+      const url = document.getElementById('newUrl').value.trim();
+      const secret = document.getElementById('newSecret').value.trim() || undefined;
+      const zoneType = document.querySelector('input[name="zoneType"]:checked').value;
+      const notifyEntry = document.getElementById('notifyEntry').checked;
+      const notifyExit = document.getElementById('notifyExit').checked;
+      const ttl = document.querySelector('input[name="ttl"]:checked').value;
+      const includeTypes = parseTypeList(document.getElementById('includeTypes').value);
+      const excludeTypes = parseTypeList(document.getElementById('excludeTypes').value);
+
+      if (!url) {
+        showStatus('Please enter a webhook URL', 'error');
+        return;
+      }
+
+      const body = {
+        url,
+        secret,
+        notify_entry: notifyEntry,
+        notify_exit: notifyExit,
+        include_types: includeTypes,
+        exclude_types: excludeTypes,
+        ttl_seconds: ttl ? parseInt(ttl) : undefined
+      };
+
+      if (zoneType === 'area') {
+        const areaId = document.getElementById('newAreaId').value;
+        if (!areaId) {
+          showStatus('Please select an area', 'error');
+          return;
+        }
+        body.area_id = parseInt(areaId);
+      } else {
+        const lat = parseFloat(document.getElementById('newLat').value);
+        const lon = parseFloat(document.getElementById('newLon').value);
+        const radius = parseFloat(document.getElementById('newRadius').value);
+
+        if (isNaN(lat) || isNaN(lon) || isNaN(radius)) {
+          showStatus('Please enter valid coordinates and radius', 'error');
+          return;
+        }
+
+        body.zone = { center: { lat, lon }, radius_km: radius };
+      }
+
+      try {
+        const response = await fetch('/webhooks/subscriptions', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+
+        if (response.ok) {
+          showStatus('Subscription created successfully', 'success');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          const error = await response.json();
+          showStatus(error.error || 'Failed to create subscription', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to create subscription', 'error');
+      }
+    }
+
+    async function testWebhook(subId) {
+      showStatus('Testing webhook...', 'success');
+
+      try {
+        const response = await fetch(`/webhooks/subscriptions/${subId}/test`, {
+          method: 'POST'
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          showStatus(`Test successful! Status: ${result.status_code}, Duration: ${result.duration_ms}ms`, 'success');
+        } else {
+          showStatus(`Test failed: ${result.error || 'Unknown error'}`, 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to test webhook', 'error');
+      }
+    }
+
+    async function viewHistory(subId) {
+      try {
+        const response = await fetch(`/webhooks/subscriptions/${subId}/history?limit=50`);
+        const data = await response.json();
+
+        const tbody = document.getElementById('modalHistoryTable');
+        tbody.innerHTML = '';
+
+        if (data.deliveries && data.deliveries.length > 0) {
+          data.deliveries.forEach(d => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${new Date(d.created_at).toLocaleString()}</td>
+                <td>${d.event_type.toUpperCase()}</td>
+                <td>${d.aircraft_hex}</td>
+                <td class="${d.success ? 'history-success' : 'history-fail'}">
+                  ${d.success ? 'OK' : 'FAIL'} ${d.status_code ? '(' + d.status_code + ')' : ''}
+                  ${d.error_message ? '<br><small>' + d.error_message + '</small>' : ''}
+                </td>
+                <td>${d.duration_ms ? d.duration_ms + 'ms' : '-'}</td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No delivery history</td></tr>';
+        }
+
+        document.getElementById('historyModal').classList.add('active');
+      } catch (error) {
+        showStatus('Failed to load history', 'error');
+      }
+    }
+
+    async function loadGlobalHistory() {
+      const subId = document.getElementById('historySubFilter').value;
+      const tbody = document.getElementById('historyTable');
+
+      if (!subId) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Select a subscription to view history</td></tr>';
+        return;
+      }
+
+      try {
+        const response = await fetch(`/webhooks/subscriptions/${subId}/history?limit=100`);
+        const data = await response.json();
+
+        tbody.innerHTML = '';
+
+        if (data.deliveries && data.deliveries.length > 0) {
+          data.deliveries.forEach(d => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${new Date(d.created_at).toLocaleString()}</td>
+                <td>${d.event_type.toUpperCase()}</td>
+                <td>${d.aircraft_hex}</td>
+                <td class="${d.success ? 'history-success' : 'history-fail'}">
+                  ${d.success ? 'OK' : 'FAIL'} ${d.status_code ? '(' + d.status_code + ')' : ''}
+                </td>
+                <td>${d.duration_ms ? d.duration_ms + 'ms' : '-'}</td>
+              </tr>
+            `;
+          });
+        } else {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No delivery history for this subscription</td></tr>';
+        }
+      } catch (error) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load history</td></tr>';
+      }
+    }
+
+    async function reactivateSubscription(subId) {
+      try {
+        const response = await fetch(`/webhooks/subscriptions/${subId}/reactivate`, {
+          method: 'POST'
+        });
+
+        if (response.ok) {
+          showStatus('Subscription reactivated', 'success');
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          showStatus('Failed to reactivate subscription', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to reactivate subscription', 'error');
+      }
+    }
+
+    async function deleteSubscription(subId) {
+      if (!confirm('Delete this subscription? This cannot be undone.')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/webhooks/subscriptions/${subId}`, {
+          method: 'DELETE'
+        });
+
+        if (response.ok) {
+          showStatus('Subscription deleted', 'success');
+          document.querySelector(`[data-sub-id="${subId}"]`).remove();
+        } else {
+          showStatus('Failed to delete subscription', 'error');
+        }
+      } catch (error) {
+        showStatus('Failed to delete subscription', 'error');
+      }
+    }
+
+    function closeModal() {
+      document.getElementById('historyModal').classList.remove('active');
+    }
+
+    function showStatus(message, type = 'success') {
+      const statusEl = document.getElementById('statusMessage');
+      statusEl.textContent = message;
+      statusEl.className = `status-message ${type} visible`;
+
+      setTimeout(() => {
+        statusEl.classList.remove('visible');
+      }, 3000);
+    }
+  </script>
+</body>
+</html>
