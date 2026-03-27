@@ -525,6 +525,14 @@ class RadarDisplay {
     this.selectedAircraft = icao24;
     this.drawAircraft();
     this.updateSidebar();
+
+    // Scroll selected item into view in sidebar
+    if (icao24) {
+      const selectedItem = document.querySelector(`.aircraft-item-sidebar[data-icao="${icao24}"]`);
+      if (selectedItem) {
+        selectedItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
   }
 
   getDistanceFromCenter(lat, lon) {
