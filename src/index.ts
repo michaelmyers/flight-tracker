@@ -2,14 +2,17 @@ import express from "express";
 import bodyParser from "body-parser";
 import { createServer } from "http";
 import api from "./api.js";
+import { webhookRouter } from "./webhookApi.js";
 import webRouterModule from "./web/webRouter.js";
 import { startObserver } from "./observer.js";
 import { initializeWebSocketServer } from "./web/websocketServer.js";
+import { startCleanupInterval } from "./webhookSubscriptionManager.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 startObserver();
+startCleanupInterval();
 
 const app = express();
 const server = createServer(app);
@@ -19,6 +22,7 @@ initializeWebSocketServer(server);
 
 app.use(bodyParser.json());
 app.use(api);
+app.use("/webhooks", webhookRouter);
 app.use("/", webRouterModule.router);
 
 const port = Number(process.env.PORT ?? 3000);
